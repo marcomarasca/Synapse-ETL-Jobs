@@ -22,6 +22,10 @@ class UnitTestProcessMethod(unittest.TestCase):
         real_output = process_accessRecord_job.getNormalizedMethodSignature("repo/v1/entity/syn123456")
         self.assertEqual(expected_output, real_output)
 
+        with self.assertRaises(ValueError) as context:
+            process_accessRecord_job.getNormalizedMethodSignature("repo/entity/syn123456")
+            self.assertTrue("It must start with {optional WAR name}/{any string}/v1/" in str(context.exception))
+
     def test_getClient(self):
         expected_output = "WEB"
         real_output = process_accessRecord_job.getClient("Synapse-Web-Client/435.0")
@@ -111,6 +115,9 @@ class UnitTestProcessMethod(unittest.TestCase):
         real_output = process_accessRecord_job.getClientVersion(None, "testClient")
         self.assertIsNone(real_output)
 
+        real_output = process_accessRecord_job.getClientVersion("STACK", None)
+        self.assertIsNone(real_output)
+
     def test_getEntityId(self):
         expected_output = "12223809"
         real_output = process_accessRecord_job.getEntityId("/repo/v1/entity/syn12223809")
@@ -121,4 +128,7 @@ class UnitTestProcessMethod(unittest.TestCase):
         self.assertEqual(expected_output, real_output)
 
         real_output = process_accessRecord_job.getEntityId("/repo/v1/version")
+        self.assertIsNone(real_output)
+
+        real_output = process_accessRecord_job.getEntityId(None)
         self.assertIsNone(real_output)
