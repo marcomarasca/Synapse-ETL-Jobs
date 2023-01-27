@@ -91,7 +91,8 @@ def getNormalizedMethodSignature(requesturl):
     url = requesturl.lower()
     prefix_index = url.find('/v1/')
     if prefix_index == -1:
-        print("not valid")
+        raise ValueError("requestPath: " + requesturl + "was not correctly formatted. It must start with {optional "
+                                                        "WAR name}/{any string}/v1/")
     else:
         start = prefix_index + 3
         requesturl = url[start:]
