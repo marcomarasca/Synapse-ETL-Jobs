@@ -177,11 +177,12 @@ def get_entity_id(requesturl):
     if requesturl is None:
         return None
     else:
-        matcher = re.search("/entity/(syn\\d+|\\d+)", requesturl, re.IGNORECASE)
+        requesturl = requesturl.lower()
+        matcher = re.search("/entity/(syn\\d+|\\d+)", requesturl)
         if matcher is None:
             return None
         else:
-            entity_id = matcher.group(1).lower()
+            entity_id = matcher.group(1)
             if entity_id.startswith("syn"):
                 entity_id = entity_id[3:]
     return entity_id
