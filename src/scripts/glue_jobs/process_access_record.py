@@ -83,21 +83,21 @@ def apply_mapping(dynamic_frame):
 
 
 # process the access record
-def transform(dynamicRecord):
-    dynamicRecord["NORMALIZED_METHOD_SIGNATURE"] = dynamicRecord["METHOD"] + " " + getNormalizedMethodSignature(
-        dynamicRecord["REQUEST_URL"])
-    dynamicRecord["CLIENT"] = getClient(dynamicRecord["USERAGENT"])
-    dynamicRecord["CLIENT_VERSION"] = getClientVersion(dynamicRecord["CLIENT"], dynamicRecord["USERAGENT"])
-    dynamicRecord["ENTITY_ID"] = getEntityId(dynamicRecord["REQUEST_URL"])
-    timestamp = dynamicRecord["TIMESTAMP"]
+def transform(dynamic_record):
+    dynamic_record["NORMALIZED_METHOD_SIGNATURE"] = dynamic_record["METHOD"] + " " + get_normalized_method_signature(
+        dynamic_record["REQUEST_URL"])
+    dynamic_record["CLIENT"] = get_client(dynamic_record["USERAGENT"])
+    dynamic_record["CLIENT_VERSION"] = get_client_version(dynamic_record["CLIENT"], dynamic_record["USERAGENT"])
+    dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
+    timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
-    dynamicRecord["YEAR"] = date.year
-    dynamicRecord["MONTH"] = '%02d' % date.month
-    dynamicRecord["DAY"] = '%02d' % date.day
-    return dynamicRecord
+    dynamic_record["YEAR"] = date.year
+    dynamic_record["MONTH"] = '%02d' % date.month
+    dynamic_record["DAY"] = '%02d' % date.day
+    return dynamic_record
 
 
-def getNormalizedMethodSignature(requesturl):
+def get_normalized_method_signature(requesturl):
     url = requesturl.lower()
     prefix_index = url.find('/v1/')
     if prefix_index == -1:
@@ -117,54 +117,54 @@ def getNormalizedMethodSignature(requesturl):
     return result
 
 
-def getClient(userAgent):
-    if userAgent is None:
+def get_client(user_agent):
+    if user_agent is None:
         result = "UNKNOWN"
-    elif userAgent.find(WEB_CLIENT) >= 0:
+    elif user_agent.find(WEB_CLIENT) >= 0:
         result = "WEB"
-    elif userAgent.find(JAVA_CLIENT) >= 0:
+    elif user_agent.find(JAVA_CLIENT) >= 0:
         result = "JAVA"
-    elif userAgent.find(OLD_JAVA_CLIENT) >= 0:
+    elif user_agent.find(OLD_JAVA_CLIENT) >= 0:
         result = "JAVA"
-    elif userAgent.find(SYNAPSER_CLIENT) >= 0:
+    elif user_agent.find(SYNAPSER_CLIENT) >= 0:
         result = "SYNAPSER"
-    elif userAgent.find(R_CLIENT) >= 0:
+    elif user_agent.find(R_CLIENT) >= 0:
         result = "R"
-    elif userAgent.find(COMMAND_LINE_CLIENT) >= 0:
+    elif user_agent.find(COMMAND_LINE_CLIENT) >= 0:
         result = "COMMAND_LINE"
-    elif userAgent.find(PYTHON_CLIENT) >= 0:
+    elif user_agent.find(PYTHON_CLIENT) >= 0:
         result = "PYTHON"
-    elif userAgent.find(ELB_CLIENT) >= 0:
+    elif user_agent.find(ELB_CLIENT) >= 0:
         result = "ELB_HEALTHCHECKER"
-    elif userAgent.find(STACK_CLIENT) >= 0:
+    elif user_agent.find(STACK_CLIENT) >= 0:
         result = "STACK"
     else:
         result = "UNKNOWN"
     return result
 
 
-def getClientVersion(client, userAgent):
-    if userAgent is None:
+def get_client_version(client, user_agent):
+    if user_agent is None:
         return None
     elif client == "WEB":
-        matcher = re.match(WEB_CLIENT_PATTERN, userAgent)
+        matcher = re.match(WEB_CLIENT_PATTERN, user_agent)
     elif client == "JAVA":
-        if userAgent.startswith("Synpase"):
-            matcher = re.match(OLD_JAVA_CLIENT_PATTERN, userAgent)
+        if user_agent.startswith("Synpase"):
+            matcher = re.match(OLD_JAVA_CLIENT_PATTERN, user_agent)
         else:
-            matcher = re.match(JAVA_CLIENT_PATTERN, userAgent)
+            matcher = re.match(JAVA_CLIENT_PATTERN, user_agent)
     elif client == "SYNAPSER":
-        matcher = re.match(SYNAPSER_CLIENT_PATTERN, userAgent)
+        matcher = re.match(SYNAPSER_CLIENT_PATTERN, user_agent)
     elif client == "R":
-        matcher = re.match(R_CLIENT_PATTERN, userAgent)
+        matcher = re.match(R_CLIENT_PATTERN, user_agent)
     elif client == "PYTHON":
-        matcher = re.match(PYTHON_CLIENT_PATTERN, userAgent)
+        matcher = re.match(PYTHON_CLIENT_PATTERN, user_agent)
     elif client == "ELB_HEALTHCHECKER":
-        matcher = re.match(ELB_CLIENT_PATTERN, userAgent)
+        matcher = re.match(ELB_CLIENT_PATTERN, user_agent)
     elif client == "COMMAND_LINE":
-        matcher = re.match(COMMAND_LINE_CLIENT_PATTERN, userAgent)
+        matcher = re.match(COMMAND_LINE_CLIENT_PATTERN, user_agent)
     elif client == "STACK":
-        matcher = re.match(STACK_CLIENT_PATTERN, userAgent)
+        matcher = re.match(STACK_CLIENT_PATTERN, user_agent)
     else:
         return None
     if matcher is None:
@@ -173,18 +173,18 @@ def getClientVersion(client, userAgent):
         return matcher.group(1)
 
 
-def getEntityId(requesturl):
+def get_entity_id(requesturl):
     if requesturl is None:
         return None
     else:
-        matcher = re.search("/entity/(syn\\d+|\\d+)", requesturl)
+        matcher = re.search("/entity/(syn\\d+|\\d+)", requesturl, re.IGNORECASE)
         if matcher is None:
             return None
         else:
-            entityId = matcher.group(1)
-            if entityId.startswith("syn"):
-                entityId = entityId[3:]
-    return entityId
+            entity_id = matcher.group(1).lower()
+            if entity_id.startswith("syn"):
+                entity_id = entity_id[3:]
+    return entity_id
 
 
 def main():
@@ -199,11 +199,11 @@ def main():
 
     dynamic_frame = get_dynamic_frame("s3", "json", args["S3_SOURCE_PATH"], glue_context)
     mapped_dynamic_frame = apply_mapping(dynamic_frame)
-    transFormed_dynamic_frame = mapped_dynamic_frame.map(f=transform)
+    transformed_dynamic_frame = mapped_dynamic_frame.map(f=transform)
 
     #  Write the processed access records to destination
     write_dynamic_frame = glue_context.write_dynamic_frame.from_options(
-        frame=transFormed_dynamic_frame,
+        frame=transformed_dynamic_frame,
         connection_type="s3",
         format=args["DESTINATION_FILE_FORMAT"],
         connection_options={
