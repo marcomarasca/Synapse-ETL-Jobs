@@ -35,12 +35,6 @@ ELB_CLIENT_PATTERN = ELB_CLIENT + CLIENT_REGEX
 STACK_CLIENT_PATTERN = STACK_CLIENT + CLIENT_REGEX
 
 
-# Get argument passed in the job
-def get_args():
-    args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "S3_DESTINATION_PATH"])
-    return args
-
-
 # Get access record from source and create dynamic frame for futher processing
 def get_dynamic_frame(connection_type, file_format, source_path, glue_context):
     dynamic_frame = glue_context.create_dynamic_frame.from_options(
@@ -66,7 +60,23 @@ def apply_mapping(dynamic_frame):
             ("payload.method", "string", "METHOD", "string"),
             ("payload.requestURL", "string", "REQUEST_URL", "string"),
             ("payload.userAgent", "string", "USERAGENT", "string"),
+            ("payload.host", "string", "HOST", "string"),
+            ("payload.origin", "string", "ORIGIN", "string"),
+            ("payload.xforwardedFor", "string", "X_FORWARDED_FOR", "string"),
+            ("payload.via", "string", "VIA", "string"),
+            ("payload.threadId", "long", "THREAD_ID", "long"),
+            ("payload.elapseMS", "long", "ELAPSE_MS", "long"),
+            ("payload.success", "boolean", "SUCCESS", "boolean"),
+            ("payload.stack", "string", "STACK", "string"),
+            ("payload.instance", "string", "INSTANCE", "string"),
             ("payload.date", "string", "DATE", "string"),
+            ("payload.vmId", "string", "VM_Id", "string"),
+            ("payload.returnObjectId", "string", "RETURN_OBJECT_ID", "string"),
+            ("payload.queryString", "string", "QUERY_STRING", "string"),
+            ("payload.responseStatus", "long", "RESPONSE_STATUS", "long"),
+            ("payload.oauthClientId", "string", "OAUTH_CLIENT_ID", "string"),
+            ("payload.basicAuthUsername", "string", "BASIC_AUTH_USERNAME", "string"),
+            ("payload.authenticationMethod", "string", "AUTHENTICATION_METHOD", "string"),
         ],
         transformation_ctx="mapped_dynamic_frame")
     return mapped_dynamic_frame
@@ -80,10 +90,10 @@ def transform(dynamicRecord):
     dynamicRecord["CLIENT_VERSION"] = getClientVersion(dynamicRecord["CLIENT"], dynamicRecord["USERAGENT"])
     dynamicRecord["ENTITY_ID"] = getEntityId(dynamicRecord["REQUEST_URL"])
     timestamp = dynamicRecord["TIMESTAMP"]
-    date = datetime.datetime.fromtimestamp(timestamp / 1000.0)
+    date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
     dynamicRecord["YEAR"] = date.year
-    dynamicRecord["MONTH"] = date.month
-    dynamicRecord["DAY"] = date.day
+    dynamicRecord["MONTH"] = '%02d' % date.month
+    dynamicRecord["DAY"] = '%02d' % date.day
     return dynamicRecord
 
 
@@ -97,40 +107,40 @@ def getNormalizedMethodSignature(requesturl):
         start = prefix_index + 3
         requesturl = url[start:]
     if requesturl.startswith("/entity/md5"):
-        temp = "/entity/md5/#"
+        result = "/entity/md5/#"
     elif requesturl.startswith("/evaluation/name"):
-        temp = "/evaluation/name/#"
+        result = "/evaluation/name/#"
     elif requesturl.startswith("/entity/alias"):
-        temp = "/entity/alias/#"
+        result = "/entity/alias/#"
     else:
-        temp = re.sub("/(syn\\d+|\\d+)", "/#", requesturl)
-    return temp
+        result = re.sub("/(syn\\d+|\\d+)", "/#", requesturl)
+    return result
 
 
 def getClient(userAgent):
     if userAgent is None:
-        temp = "UNKNOWN"
+        result = "UNKNOWN"
     elif userAgent.find(WEB_CLIENT) >= 0:
-        temp = "WEB"
+        result = "WEB"
     elif userAgent.find(JAVA_CLIENT) >= 0:
-        temp = "JAVA"
+        result = "JAVA"
     elif userAgent.find(OLD_JAVA_CLIENT) >= 0:
-        temp = "JAVA"
+        result = "JAVA"
     elif userAgent.find(SYNAPSER_CLIENT) >= 0:
-        temp = "SYNAPSER"
+        result = "SYNAPSER"
     elif userAgent.find(R_CLIENT) >= 0:
-        temp = "R"
+        result = "R"
     elif userAgent.find(COMMAND_LINE_CLIENT) >= 0:
-        temp = "COMMAND_LINE"
+        result = "COMMAND_LINE"
     elif userAgent.find(PYTHON_CLIENT) >= 0:
-        temp = "PYTHON"
+        result = "PYTHON"
     elif userAgent.find(ELB_CLIENT) >= 0:
-        temp = "ELB_HEALTHCHECKER"
+        result = "ELB_HEALTHCHECKER"
     elif userAgent.find(STACK_CLIENT) >= 0:
-        temp = "STACK"
+        result = "STACK"
     else:
-        temp = "UNKNOWN"
-    return temp
+        result = "UNKNOWN"
+    return result
 
 
 def getClientVersion(client, userAgent):
@@ -156,23 +166,22 @@ def getClientVersion(client, userAgent):
     elif client == "STACK":
         matcher = re.match(STACK_CLIENT_PATTERN, userAgent)
     else:
-        matcher = None
+        return None
     if matcher is None:
-        temp = None
+        return None
     else:
-        temp = matcher.group(1)
-    return temp
+        return matcher.group(1)
 
 
 def getEntityId(requesturl):
     if requesturl is None:
-        entityId = None
+        return None
     else:
-        match = re.search("/entity/(syn\\d+|\\d+)", requesturl)
-        if match is None:
-            entityId = None
+        matcher = re.search("/entity/(syn\\d+|\\d+)", requesturl)
+        if matcher is None:
+            return None
         else:
-            entityId = match.group(1)
+            entityId = matcher.group(1)
             if entityId.startswith("syn"):
                 entityId = entityId[3:]
     return entityId
@@ -180,7 +189,8 @@ def getEntityId(requesturl):
 
 def main():
     # Get args and setup environment
-    args = get_args()
+    args = getResolvedOptions(sys.argv,
+                              ["JOB_NAME", "S3_SOURCE_PATH", "S3_DESTINATION_PATH", "DESTINATION_FILE_FORMAT"])
     sc = SparkContext()
     glue_context = GlueContext(sc)
     spark = glue_context.spark_session
@@ -195,7 +205,7 @@ def main():
     write_dynamic_frame = glue_context.write_dynamic_frame.from_options(
         frame=transFormed_dynamic_frame,
         connection_type="s3",
-        format="json",
+        format=args["DESTINATION_FILE_FORMAT"],
         connection_options={
             "path": args["S3_DESTINATION_PATH"],
             "compression": "gzip",
