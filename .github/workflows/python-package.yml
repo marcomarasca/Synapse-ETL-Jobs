@@ -35,6 +35,10 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+    - name: Build the Docker image
       run: |
-        python -m pytest
+        docker build -t amazon/aws-glue-libs:glue_libs_3.0.0_image_01 .
+        docker run -it -v ~/.aws:/home/glue_user/.aws -v  ${GITHUB_WORKSPACE}:/home/glue_user/workspace/  -e DISABLE_SSL=true --rm -p 4040:4040 -p 18080:18080  amazon/aws-glue-libs:glue_libs_3.0.0_image_01 -c "python3 -m pytest"
+        
+
+
