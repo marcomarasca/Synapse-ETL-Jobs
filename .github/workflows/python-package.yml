@@ -38,7 +38,8 @@ jobs:
     - name: Build the Docker image
       run: |
         docker build -t amazon/aws-glue-libs:glue_libs_3.0.0_image_01 .
-        docker run -it -v ~/.aws:/home/glue_user/.aws -v  ${GITHUB_WORKSPACE}:/home/glue_user/workspace/  -e DISABLE_SSL=true --rm -p 4040:4040 -p 18080:18080  amazon/aws-glue-libs:glue_libs_3.0.0_image_01 -c "python3 -m pytest"
+        echo "docker build finished -testing"
+        docker run -v ~/.aws:/home/glue_user/.aws -v  ${GITHUB_WORKSPACE}:/home/glue_user/workspace/  -e DISABLE_SSL=true --rm -p 4040:4040 -p 18080:18080  amazon/aws-glue-libs:glue_libs_3.0.0_image_01 -c "python3 -m pytest"
         
 
 
