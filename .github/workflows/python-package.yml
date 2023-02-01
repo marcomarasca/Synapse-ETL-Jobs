@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ "develop" ,"PLFM-7657" ]
+    branches: [ "develop" ]
   pull_request:
     branches: [ "develop" ]
 
