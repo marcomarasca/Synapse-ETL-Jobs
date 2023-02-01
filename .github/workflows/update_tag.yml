@@ -1,0 +1,17 @@
+name: Bump version
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: miguelfito/github-bump-and-tag-action@v1
