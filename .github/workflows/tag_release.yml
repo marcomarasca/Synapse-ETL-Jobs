@@ -17,5 +17,7 @@ jobs:
      # This 'if' condition is important for ensuring the workflow only runs for merged PRs
     #  (avoid running when a PR is discarded - closed without merging)
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Github Tag Bump
         uses: anothrNick/github-tag-action@1.61.0
