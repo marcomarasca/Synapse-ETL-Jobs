@@ -5,7 +5,7 @@ name: Bump version
 on:
   # Triggers the workflow on push or pull request events but only for the "develop" branch
   push:
-    branches: [ "develop", "PLFM-7657" ]
+    branches: [ "develop" ]
   pull_request:
     types: 
       - closed
@@ -14,8 +14,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-     # This 'if' condition is important for ensuring the workflow only runs for merged PRs
+    # This 'if' condition is important for ensuring the workflow only runs for merged PRs
     #  (avoid running when a PR is discarded - closed without merging)
+    if: github.event.pull_request.merged == true
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
