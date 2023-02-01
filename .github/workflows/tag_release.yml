@@ -21,3 +21,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Github Tag Bump
         uses: anothrNick/github-tag-action@1.61.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          WITH_V: true
