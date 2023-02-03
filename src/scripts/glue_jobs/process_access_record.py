@@ -91,6 +91,7 @@ def transform(dynamic_record):
     dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
     timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
+    dynamic_record["DATE_TIME"] = date
     dynamic_record["YEAR"] = date.year
     dynamic_record["MONTH"] = '%02d' % date.month
     dynamic_record["DAY"] = '%02d' % date.day
@@ -101,8 +102,7 @@ def get_normalized_method_signature(requesturl):
     url = requesturl.lower()
     prefix_index = url.find('/v1/')
     if prefix_index == -1:
-        raise ValueError("requestPath: " + requesturl + "was not correctly formatted. It must start with {optional "
-                                                        "WAR name}/{any string}/v1/")
+        return "INVALID URL"
     else:
         start = prefix_index + 3
         requesturl = url[start:]

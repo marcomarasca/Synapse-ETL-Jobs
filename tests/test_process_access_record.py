@@ -7,17 +7,17 @@ class TestTransformedAccessRecord(unittest.TestCase):
 
     def test_normalized_signature_for_md5_in_url(self):
         expected_output = "/entity/md5/#"
-        real_output = process_access_record.get_normalized_method_signature("repo/v1/entity/md5")
+        real_output = process_access_record.get_normalized_method_signature("start/repo/v1/entity/md5/132-456thfd")
         self.assertEqual(expected_output, real_output)
 
     def test_normalized_signature_for_name_in_url(self):
         expected_output = "/evaluation/name/#"
-        real_output = process_access_record.get_normalized_method_signature("repo/v1/evaluation/name")
+        real_output = process_access_record.get_normalized_method_signature("any/repo/v1/evaluation/name/test/random")
         self.assertEqual(expected_output, real_output)
 
     def test_normalized_signature_for_alias_in_url(self):
         expected_output = "/entity/alias/#"
-        real_output = process_access_record.get_normalized_method_signature("repo/v1/entity/alias")
+        real_output = process_access_record.get_normalized_method_signature("repo/v1/entity/alias/XYZNDY")
         self.assertEqual(expected_output, real_output)
 
     def test_normalized_signature_for_id_in_url(self):
@@ -25,10 +25,10 @@ class TestTransformedAccessRecord(unittest.TestCase):
         real_output = process_access_record.get_normalized_method_signature("repo/v1/entity/syn123456/random/123")
         self.assertEqual(expected_output, real_output)
 
-    def test_normalized_signature_raise_exception(self):
-        with self.assertRaises(ValueError) as context:
-            process_access_record.get_normalized_method_signature("repo/entity/syn123456")
-            self.assertTrue("It must start with {optional WAR name}/{any string}/v1/" in str(context.exception))
+    def test_normalized_signature_for_invalid_url(self):
+        expected_output = "INVALID URL"
+        real_output = process_access_record.get_normalized_method_signature("start/repo/entity/syn123456")
+        self.assertEqual(expected_output, real_output)
 
     def test_normalized_signature_for_random_valid_url(self):
         expected_output = "/admin/locks"
