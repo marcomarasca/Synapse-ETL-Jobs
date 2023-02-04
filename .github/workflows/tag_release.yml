@@ -3,7 +3,6 @@ name: Bump version
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "develop" branch
   push:
     branches: [ "develop" ]
   pull_request:
@@ -14,9 +13,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-     # This 'if' condition is important for ensuring the workflow only runs for merged PRs
+    # This 'if' ensuring the workflow only runs for merged PRs
     #  (avoid running when a PR is discarded - closed without merging)
     if: github.event.pull_request.merged == true
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Github Tag Bump
         uses: anothrNick/github-tag-action@1.61.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          WITH_V: true
