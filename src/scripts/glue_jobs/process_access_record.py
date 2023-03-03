@@ -92,9 +92,9 @@ def transform(dynamic_record):
     timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
     dynamic_record["DATE_TIME"] = date
-    dynamic_record["YEAR"] = date.year
-    dynamic_record["MONTH"] = '%02d' % date.month
-    dynamic_record["DAY"] = '%02d' % date.day
+    dynamic_record["year"] = date.year
+    dynamic_record["month"] = '%02d' % date.month
+    dynamic_record["day"] = '%02d' % date.day
     return dynamic_record
 
 
