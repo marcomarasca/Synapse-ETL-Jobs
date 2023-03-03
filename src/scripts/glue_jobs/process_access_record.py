@@ -210,7 +210,7 @@ def main():
         connection_options={
             "path": args["S3_DESTINATION_PATH"],
             "compression": "gzip",
-            "partitionKeys": ["YEAR", "MONTH", "DAY"],
+            "partitionKeys": ["year", "month", "day"],
         },
         transformation_ctx="write_dynamic_frame")
 
