@@ -44,6 +44,8 @@ def get_dynamic_frame(connection_type, file_format, source_path, glue_context):
         connection_options={
             "paths": [source_path],
             "recurse": True,
+            "groupFiles": "inPartition",
+            "groupSize": "1048576",
         },
         transformation_ctx="dynamic_frame")
     return dynamic_frame
