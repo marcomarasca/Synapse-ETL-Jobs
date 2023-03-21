@@ -70,7 +70,6 @@ def apply_mapping(dynamic_frame):
             ("payload.success", "boolean", "SUCCESS", "boolean"),
             ("payload.stack", "string", "STACK", "string"),
             ("payload.instance", "string", "INSTANCE", "string"),
-            ("payload.date", "string", "DATE", "string"),
             ("payload.vmId", "string", "VM_Id", "string"),
             ("payload.returnObjectId", "string", "RETURN_OBJECT_ID", "string"),
             ("payload.queryString", "string", "QUERY_STRING", "string"),
@@ -92,7 +91,6 @@ def transform(dynamic_record):
     dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
     timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
-    dynamic_record["DATE_TIME"] = date
     dynamic_record["year"] = date.year
     dynamic_record["month"] = '%02d' % date.month
     dynamic_record["day"] = '%02d' % date.day
