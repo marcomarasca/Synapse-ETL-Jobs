@@ -51,14 +51,13 @@ def get_dynamic_frame(connection_type, file_format, source_path, glue_context):
     return dynamic_frame
 
 
-# There are many fields in access records, however we need some of them for further processing
 def apply_mapping(dynamic_frame):
     mapped_dynamic_frame = ApplyMapping.apply(
         frame=dynamic_frame,
         mappings=[
             ("payload.sessionId", "string", "SESSION_ID", "string"),
-            ("payload.timestamp", "long", "TIMESTAMP", "long"),
-            ("payload.userId", "int", "USER_ID", "int"),
+            ("payload.timestamp", "bigint", "TIMESTAMP", "bigint"),
+            ("payload.userId", "bigint", "USER_ID", "bigint"),
             ("payload.method", "string", "METHOD", "string"),
             ("payload.requestURL", "string", "REQUEST_URL", "string"),
             ("payload.userAgent", "string", "USERAGENT", "string"),
@@ -66,16 +65,15 @@ def apply_mapping(dynamic_frame):
             ("payload.origin", "string", "ORIGIN", "string"),
             ("payload.xforwardedFor", "string", "X_FORWARDED_FOR", "string"),
             ("payload.via", "string", "VIA", "string"),
-            ("payload.threadId", "long", "THREAD_ID", "long"),
-            ("payload.elapseMS", "long", "ELAPSE_MS", "long"),
+            ("payload.threadId", "bigint", "THREAD_ID", "bigint"),
+            ("payload.elapseMS", "bigint", "ELAPSE_MS", "bigint"),
             ("payload.success", "boolean", "SUCCESS", "boolean"),
             ("payload.stack", "string", "STACK", "string"),
             ("payload.instance", "string", "INSTANCE", "string"),
-            ("payload.date", "string", "DATE", "string"),
             ("payload.vmId", "string", "VM_Id", "string"),
             ("payload.returnObjectId", "string", "RETURN_OBJECT_ID", "string"),
             ("payload.queryString", "string", "QUERY_STRING", "string"),
-            ("payload.responseStatus", "long", "RESPONSE_STATUS", "long"),
+            ("payload.responseStatus", "bigint", "RESPONSE_STATUS", "bigint"),
             ("payload.oauthClientId", "string", "OAUTH_CLIENT_ID", "string"),
             ("payload.basicAuthUsername", "string", "BASIC_AUTH_USERNAME", "string"),
             ("payload.authenticationMethod", "string", "AUTHENTICATION_METHOD", "string"),
@@ -93,7 +91,6 @@ def transform(dynamic_record):
     dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
     timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
-    dynamic_record["DATE_TIME"] = date
     dynamic_record["year"] = date.year
     dynamic_record["month"] = '%02d' % date.month
     dynamic_record["day"] = '%02d' % date.day
@@ -193,7 +190,7 @@ def get_entity_id(requesturl):
 def main():
     # Get args and setup environment
     args = getResolvedOptions(sys.argv,
-                              ["JOB_NAME", "S3_SOURCE_PATH", "S3_DESTINATION_PATH", "DESTINATION_FILE_FORMAT"])
+                              ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
     sc = SparkContext()
     glue_context = GlueContext(sc)
     spark = glue_context.spark_session
@@ -203,17 +200,14 @@ def main():
     dynamic_frame = get_dynamic_frame("s3", "json", args["S3_SOURCE_PATH"], glue_context)
     mapped_dynamic_frame = apply_mapping(dynamic_frame)
     transformed_dynamic_frame = mapped_dynamic_frame.map(f=transform)
+    type_casted_dynamic_frame = transformed_dynamic_frame.resolveChoice(specs=[("ENTITY_ID", "cast:bigint")])
 
     #  Write the processed access records to destination
-    write_dynamic_frame = glue_context.write_dynamic_frame.from_options(
-        frame=transformed_dynamic_frame,
-        connection_type="s3",
-        format=args["DESTINATION_FILE_FORMAT"],
-        connection_options={
-            "path": args["S3_DESTINATION_PATH"],
-            "compression": "gzip",
-            "partitionKeys": ["year", "month", "day"],
-        },
+    write_dynamic_frame = glue_context.write_dynamic_frame.from_catalog(
+        frame=type_casted_dynamic_frame,
+        database=args["DATABASE_NAME"],
+        table_name=args["TABLE_NAME"],
+        additional_options={"partitionKeys": ["year", "month", "day"]},
         transformation_ctx="write_dynamic_frame")
 
     job.commit()
