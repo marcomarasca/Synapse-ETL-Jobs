@@ -33,14 +33,9 @@ Build image
 ```
 docker build -t aws-glue .
 ```
-To run tests use below command
+To run tests use below command.It will execute the test files, name starts with test.
 ```
 docker run -v ~/.aws:/home/glue_user/.aws -v  ${GITHUB_WORKSPACE}:/home/glue_user/workspace/  -e DISABLE_SSL=true --rm -p 4040:4040 -p 18080:18080  aws-glue -c "python3 -m pytest"
-```
-
-To run specific test file use --name.
-```
-docker run -v ~/.aws:/home/glue_user/.aws -v  ${GITHUB_WORKSPACE}:/home/glue_user/workspace/  -e DISABLE_SSL=true --rm -p 4040:4040 -p 18080:18080 --name filename.py aws-glue -c "python3 -m pytest"
 ```
 
 # GitHub Actions
