@@ -60,7 +60,7 @@ def apply_mapping(dynamic_frame):
             ("payload.userId", "bigint", "USER_ID", "bigint"),
             ("payload.method", "string", "METHOD", "string"),
             ("payload.requestURL", "string", "REQUEST_URL", "string"),
-            ("payload.userAgent", "string", "USERAGENT", "string"),
+            ("payload.userAgent", "string", "USER_AGENT", "string"),
             ("payload.host", "string", "HOST", "string"),
             ("payload.origin", "string", "ORIGIN", "string"),
             ("payload.xforwardedFor", "string", "X_FORWARDED_FOR", "string"),
@@ -76,7 +76,7 @@ def apply_mapping(dynamic_frame):
             ("payload.responseStatus", "bigint", "RESPONSE_STATUS", "bigint"),
             ("payload.oauthClientId", "string", "OAUTH_CLIENT_ID", "string"),
             ("payload.basicAuthUsername", "string", "BASIC_AUTH_USERNAME", "string"),
-            ("payload.authenticationMethod", "string", "AUTHENTICATION_METHOD", "string"),
+            ("payload.authenticationMethod", "string", "AUTH_METHOD", "string"),
         ],
         transformation_ctx="mapped_dynamic_frame")
     return mapped_dynamic_frame
