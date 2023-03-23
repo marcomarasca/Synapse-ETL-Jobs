@@ -86,8 +86,8 @@ def apply_mapping(dynamic_frame):
 def transform(dynamic_record):
     dynamic_record["NORMALIZED_METHOD_SIGNATURE"] = dynamic_record["METHOD"] + " " + get_normalized_method_signature(
         dynamic_record["REQUEST_URL"])
-    dynamic_record["CLIENT"] = get_client(dynamic_record["USERAGENT"])
-    dynamic_record["CLIENT_VERSION"] = get_client_version(dynamic_record["CLIENT"], dynamic_record["USERAGENT"])
+    dynamic_record["CLIENT"] = get_client(dynamic_record["USER_AGENT"])
+    dynamic_record["CLIENT_VERSION"] = get_client_version(dynamic_record["CLIENT"], dynamic_record["USER_AGENT"])
     dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
     timestamp = dynamic_record["TIMESTAMP"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
