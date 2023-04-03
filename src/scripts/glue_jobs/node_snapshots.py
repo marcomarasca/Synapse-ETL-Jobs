@@ -58,7 +58,10 @@ def strip_syn_prefix(input_string):
     if input_string is None:
         return input_string
 
-    return input_string.removeprefix('syn')
+    if input_string.startswith('syn'):
+        return input_string[len('syn'):]
+
+    return input_string
 
 def transform(dynamic_record):
     date = datetime.utcfromtimestamp(dynamic_record["changeTimestamp"] / 1000.0)
