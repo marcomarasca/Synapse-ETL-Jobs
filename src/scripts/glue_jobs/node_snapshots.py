@@ -51,12 +51,14 @@ def main():
         connection_options={
             "paths": [args["S3_SOURCE_PATH"]],
             "recurse": True
-        }
+        },
+        # Note: even though this is optional, job bookmark does not work without it
+        transformation_ctx="input_frame"
     )
 
     # Maps the incoming record to a flatten table
     mapped_frame = input_frame.apply_mapping(
-        [
+        mappings=[
             ("changeType",                      "string",   "change_type",          "string"),
             ("changeTimestamp",                 "bigint",   "change_timestamp",     "bigint"),
             ("userId",                          "bigint",   "change_user_id",       "bigint"),
@@ -76,28 +78,34 @@ def main():
             ("snapshot.isPublic",               "boolean",  "is_public",            "boolean"),
             ("snapshot.isControlled",           "boolean",  "is_controlled",        "boolean"),
             ("snapshot.isRestricted",           "boolean",  "is_restricted",        "boolean"),
-        ]
+        ],
+        transformation_ctx="mapped_frame"
     )
 
     # Apply transformations (compute the partition and get rid of syn prefix)
-    transformed_frame = mapped_frame.map(f=transform)
+    transformed_frame = mapped_frame.map(
+        f=transform, 
+        transformation_ctx="transformed_frame"
+    )
 
     # Now cast the "ids" to actual long
     output_frame = transformed_frame.resolveChoice(
-        [
+        specs=[
             ("id", "cast:bigint"),
             ("benefactor_id", "cast:bigint"),
             ("project_id", "cast:bigint"),
             ("parent_id", "cast:bigint"),
             ("file_handle_id", "cast:bigint")
-        ]
+        ],
+        transformation_ctx="output_frame"
     )
 
-    glue_context.write_dynamic_frame.from_catalog(
+    final_frame = glue_context.write_dynamic_frame.from_catalog(
         frame=output_frame,
         database=args["DATABASE_NAME"],
         table_name=args["TABLE_NAME"],
-        additional_options={"partitionKeys": ["change_date"]}
+        additional_options={"partitionKeys": ["change_date"]},
+        transformation_ctx="final_frame"
     )
 
     job.commit()
