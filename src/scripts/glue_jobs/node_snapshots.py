@@ -35,7 +35,7 @@ def transform(dynamic_record):
     dynamic_record["file_handle_id"] = strip_syn_prefix(dynamic_record["file_handle_id"])
     
     return dynamic_record
-    
+
 def main():
     args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
     sc = SparkContext()
@@ -57,9 +57,8 @@ def main():
     )
 
     # Maps the incoming record to a flatten table
-    mapped_frame = ApplyMapping.apply(
-        frame=input_frame,
-        mappings=[
+    mapped_frame = input_frame.apply_mapping(
+        [
             ("changeType",                      "string",   "change_type",          "string"),
             ("changeTimestamp",                 "bigint",   "change_timestamp",     "bigint"),
             ("userId",                          "bigint",   "change_user_id",       "bigint"),
@@ -79,8 +78,7 @@ def main():
             ("snapshot.isPublic",               "boolean",  "is_public",            "boolean"),
             ("snapshot.isControlled",           "boolean",  "is_controlled",        "boolean"),
             ("snapshot.isRestricted",           "boolean",  "is_restricted",        "boolean"),
-        ],
-        transformation_ctx="mapped_frame"
+        ]
     )
 
     # Apply transformations (compute the partition and get rid of syn prefix)
@@ -97,15 +95,16 @@ def main():
         ]
     )
 
-    glue_context.write_dynamic_frame.from_catalog(
-        frame=output_frame,
-        database=args["DATABASE_NAME"],
-        table_name=args["TABLE_NAME"],
-        additional_options={"partitionKeys": ["change_date"]}
-    )
+    # Write only if there is new data (this will error out otherwise)
+    if (output_frame.count() > 0):
+        glue_context.write_dynamic_frame.from_catalog(
+            frame=output_frame,
+            database=args["DATABASE_NAME"],
+            table_name=args["TABLE_NAME"],
+            additional_options={"partitionKeys": ["change_date"]}
+        )
 
     job.commit()
-
 
 if __name__ == "__main__":
     main()
