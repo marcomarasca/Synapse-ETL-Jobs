@@ -17,7 +17,7 @@ def strip_syn_prefix(input_string):
     
     if input_string.startswith('syn'):
         return input_string[len('syn'):]
-
+        
     return input_string
 
 # process the access record
@@ -33,9 +33,9 @@ def transform(dynamic_record):
     dynamic_record["project_id"] = strip_syn_prefix(dynamic_record["project_id"])
     dynamic_record["parent_id"] = strip_syn_prefix(dynamic_record["parent_id"])
     dynamic_record["file_handle_id"] = strip_syn_prefix(dynamic_record["file_handle_id"])
-
+    
     return dynamic_record
-
+    
 def main():
     args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
     sc = SparkContext()
@@ -57,7 +57,8 @@ def main():
     )
 
     # Maps the incoming record to a flatten table
-    mapped_frame = input_frame.apply_mapping(
+    mapped_frame = ApplyMapping.apply(
+        frame=input_frame,
         mappings=[
             ("changeType",                      "string",   "change_type",          "string"),
             ("changeTimestamp",                 "bigint",   "change_timestamp",     "bigint"),
@@ -83,29 +84,24 @@ def main():
     )
 
     # Apply transformations (compute the partition and get rid of syn prefix)
-    transformed_frame = mapped_frame.map(
-        f=transform, 
-        transformation_ctx="transformed_frame"
-    )
-
+    transformed_frame = mapped_frame.map(f=transform)
+    
     # Now cast the "ids" to actual long
     output_frame = transformed_frame.resolveChoice(
-        specs=[
+        [
             ("id", "cast:bigint"),
             ("benefactor_id", "cast:bigint"),
             ("project_id", "cast:bigint"),
             ("parent_id", "cast:bigint"),
             ("file_handle_id", "cast:bigint")
-        ],
-        transformation_ctx="output_frame"
+        ]
     )
 
-    final_frame = glue_context.write_dynamic_frame.from_catalog(
+    glue_context.write_dynamic_frame.from_catalog(
         frame=output_frame,
         database=args["DATABASE_NAME"],
         table_name=args["TABLE_NAME"],
-        additional_options={"partitionKeys": ["change_date"]},
-        transformation_ctx="final_frame"
+        additional_options={"partitionKeys": ["change_date"]}
     )
 
     job.commit()
