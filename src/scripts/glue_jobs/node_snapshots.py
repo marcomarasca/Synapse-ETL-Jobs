@@ -21,7 +21,10 @@ def strip_syn_prefix(input_string):
     return input_string
 
 def ms_to_athena_timestamp(timestamp_ms):
-    # yyyy-MM-dd HH:mm:ss
+    if (timestamp_ms is None):
+        return timestamp_ms
+    
+    # yyyy-MM-dd HH:mm:ss.fff
     return datetime.utcfromtimestamp(timestamp_ms / 1000.0).isoformat(sep=' ', timespec='milliseconds')
 
 # process the access record
