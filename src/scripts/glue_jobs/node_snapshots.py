@@ -22,10 +22,10 @@ def strip_syn_prefix(input_string):
 
 # process the access record
 def transform(dynamic_record):
-    date = datetime.utcfromtimestamp(dynamic_record["change_timestamp"] / 1000.0)
+    date = datetime.utcfromtimestamp(dynamic_record["snapshot_timestamp"] / 1000.0)
     
     # This is the partition date
-    dynamic_record["change_date"] = date.strftime("%Y-%m-%d")
+    dynamic_record["snapshot_date"] = date.strftime("%Y-%m-%d")
     
     # The records come in with the syn prefix, we need to remove that
     dynamic_record["id"] = strip_syn_prefix(dynamic_record["id"])
@@ -101,7 +101,7 @@ def main():
             frame=output_frame,
             database=args["DATABASE_NAME"],
             table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": ["change_date"]}
+            additional_options={"partitionKeys": ["snapshot_date"]}
         )
 
     job.commit()
