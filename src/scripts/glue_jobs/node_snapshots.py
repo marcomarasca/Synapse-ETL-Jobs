@@ -20,12 +20,14 @@ def strip_syn_prefix(input_string):
         
     return input_string
 
+def ms_to_athena_timestamp(timestamp_ms):
+    # yyyy-MM-dd HH:mm:ss
+    return datetime.utcfromtimestamp(timestamp_ms / 1000.0).isoformat(sep=' ', timespec='milliseconds')
+
 # process the access record
 def transform(dynamic_record):
-    date = datetime.utcfromtimestamp(dynamic_record["snapshot_timestamp"] / 1000.0)
-    
     # This is the partition date
-    dynamic_record["snapshot_date"] = date.strftime("%Y-%m-%d")
+    dynamic_record["snapshot_date"] = datetime.utcfromtimestamp(dynamic_record["snapshot_timestamp"] / 1000.0).strftime("%Y-%m-%d")
     
     # The records come in with the syn prefix, we need to remove that
     dynamic_record["id"] = strip_syn_prefix(dynamic_record["id"])
@@ -33,6 +35,12 @@ def transform(dynamic_record):
     dynamic_record["project_id"] = strip_syn_prefix(dynamic_record["project_id"])
     dynamic_record["parent_id"] = strip_syn_prefix(dynamic_record["parent_id"])
     dynamic_record["file_handle_id"] = strip_syn_prefix(dynamic_record["file_handle_id"])
+
+    # Convert all the timestamps represented as ms to an athena compatible timestamp
+    dynamic_record["snapshot_timestamp"] = ms_to_athena_timestamp(dynamic_record["snapshot_timestamp"])
+    dynamic_record["change_timestamp"] = ms_to_athena_timestamp(dynamic_record["change_timestamp"])
+    dynamic_record["created_on"] = ms_to_athena_timestamp(dynamic_record["created_on"])
+    dynamic_record["modified_on"] = ms_to_athena_timestamp(dynamic_record["modified_on"])
     
     return dynamic_record
 
@@ -84,14 +92,18 @@ def main():
     # Apply transformations (compute the partition and get rid of syn prefix)
     transformed_frame = mapped_frame.map(f=transform)
     
-    # Now cast the "ids" to actual long
+    # Now cast the "ids" to actual long as well the timestamps
     output_frame = transformed_frame.resolveChoice(
         [
             ("id", "cast:bigint"),
             ("benefactor_id", "cast:bigint"),
             ("project_id", "cast:bigint"),
             ("parent_id", "cast:bigint"),
-            ("file_handle_id", "cast:bigint")
+            ("file_handle_id", "cast:bigint"),
+            ("snapshot_timestamp", "cast:timestamp"),
+            ("change_timestamp", "cast:timestamp"),
+            ("created_on", "cast:timestamp"),
+            ("modified_on", "cast:timestamp")
         ]
     )
 
