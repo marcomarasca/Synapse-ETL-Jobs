@@ -58,18 +58,19 @@ def main():
             ("changeTimestamp",             "bigint",   "change_timestamp",     "bigint"),
             ("userId",                      "bigint",   "change_user_id",       "bigint"),
             ("snapshotTimestamp",           "bigint",   "snapshot_timestamp",   "bigint"),
-            ("snapshot.id",                 "string",   "id",                   "string"),
-            ("snapshot.createdBy",          "string",   "created_by",           "string"),
+            ("snapshot.id",                 "string",   "id",                   "bigint"),
+            ("snapshot.createdBy",          "string",   "created_by",           "bigint"),
             ("snapshot.createdOn",          "bigint",   "created_on",           "bigint"),
             ("snapshot.modifiedOn",         "bigint",   "modified_on",          "bigint"),
             ("snapshot.concreteType",       "string",   "concrete_type",        "string"),
             ("snapshot.contentMd5",         "string",   "content_md5",          "string"),
+            ("snapshot.contentType",        "string",   "content_type",         "string"),
             ("snapshot.fileName",           "string",   "file_name",            "string"),
             ("snapshot.storageLocationId",  "bigint",   "storage_location_id",  "bigint"),
             ("snapshot.contentSize",        "bigint",   "content_size",         "bigint"),
             ("snapshot.bucket",             "string",   "bucket",               "string"),
             ("snapshot.key",                "string",   "key",                  "string"),
-            ("snapshot.previewId",          "string",   "preview_id",           "string"),
+            ("snapshot.previewId",          "string",   "preview_id",           "bigint"),
             ("snapshot.isPreview",          "boolean",  "is_preview",           "boolean"),
             ("snapshot.status",             "string",   "status",               "string")
         ]
@@ -81,9 +82,6 @@ def main():
     # Now cast the "ids" to actual long as well the timestamps
     output_frame = transformed_frame.resolveChoice(
         [
-            ("id", "cast:bigint"),
-            ("created_by", "cast:bigint"),
-            ("preview_id", "cast:bigint"),
             ("snapshot_timestamp", "cast:timestamp"),
             ("change_timestamp", "cast:timestamp"),
             ("created_on", "cast:timestamp"),
