@@ -4,24 +4,19 @@ Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d 
 """
 
 import sys
-from datetime import datetime
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-def ms_to_athena_timestamp(timestamp_ms):
-    if (timestamp_ms is None):
-        return timestamp_ms
-    
-    # yyyy-MM-dd HH:mm:ss.fff
-    return datetime.utcfromtimestamp(timestamp_ms / 1000.0).isoformat(sep=' ', timespec='milliseconds')
+from utils import ms_to_athena_timestamp
+from utils import ms_to_partition_date
 
 # process the access record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record["snapshot_date"] = datetime.utcfromtimestamp(dynamic_record["snapshot_timestamp"] / 1000.0).strftime("%Y-%m-%d")
+    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_timestamp"])
    
     # Convert all the timestamps represented as ms to an athena compatible timestamp
     dynamic_record["snapshot_timestamp"] = ms_to_athena_timestamp(dynamic_record["snapshot_timestamp"])
