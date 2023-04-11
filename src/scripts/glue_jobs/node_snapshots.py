@@ -4,33 +4,20 @@ Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d 
 """
 
 import sys
-from datetime import datetime
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-def strip_syn_prefix(input_string):
-    if input_string is None:
-        return input_string
-    
-    if input_string.startswith('syn'):
-        return input_string[len('syn'):]
-        
-    return input_string
-
-def ms_to_athena_timestamp(timestamp_ms):
-    if (timestamp_ms is None):
-        return timestamp_ms
-    
-    # yyyy-MM-dd HH:mm:ss.fff
-    return datetime.utcfromtimestamp(timestamp_ms / 1000.0).isoformat(sep=' ', timespec='milliseconds')
+from utils import strip_syn_prefix
+from utils import ms_to_athena_timestamp
+from utils import ms_to_partition_date
 
 # process the access record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record["snapshot_date"] = datetime.utcfromtimestamp(dynamic_record["snapshot_timestamp"] / 1000.0).strftime("%Y-%m-%d")
+    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_timestamp"])
     
     # The records come in with the syn prefix, we need to remove that
     dynamic_record["id"] = strip_syn_prefix(dynamic_record["id"])
