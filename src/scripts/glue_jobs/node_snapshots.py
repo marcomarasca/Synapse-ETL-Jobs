@@ -11,7 +11,6 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 
 from utils import strip_syn_prefix
-from utils import ms_to_athena_timestamp
 from utils import ms_to_partition_date
 
 # process the access record
@@ -25,12 +24,6 @@ def transform(dynamic_record):
     dynamic_record["project_id"] = strip_syn_prefix(dynamic_record["project_id"])
     dynamic_record["parent_id"] = strip_syn_prefix(dynamic_record["parent_id"])
     dynamic_record["file_handle_id"] = strip_syn_prefix(dynamic_record["file_handle_id"])
-
-    # Convert all the timestamps represented as ms to an athena compatible timestamp
-    dynamic_record["snapshot_timestamp"] = ms_to_athena_timestamp(dynamic_record["snapshot_timestamp"])
-    dynamic_record["change_timestamp"] = ms_to_athena_timestamp(dynamic_record["change_timestamp"])
-    dynamic_record["created_on"] = ms_to_athena_timestamp(dynamic_record["created_on"])
-    dynamic_record["modified_on"] = ms_to_athena_timestamp(dynamic_record["modified_on"])
     
     return dynamic_record
 
@@ -85,15 +78,19 @@ def main():
     # Now cast the "ids" to actual long as well the timestamps
     output_frame = transformed_frame.resolveChoice(
         [
-            ("id", "cast:bigint"),
-            ("benefactor_id", "cast:bigint"),
-            ("project_id", "cast:bigint"),
-            ("parent_id", "cast:bigint"),
-            ("file_handle_id", "cast:bigint"),
-            ("snapshot_timestamp", "cast:timestamp"),
-            ("change_timestamp", "cast:timestamp"),
-            ("created_on", "cast:timestamp"),
-            ("modified_on", "cast:timestamp")
+            ("change_user_id",      "cast:bigint"),
+            ("id",                  "cast:bigint"),
+            ("benefactor_id",       "cast:bigint"),
+            ("project_id",          "cast:bigint"),
+            ("parent_id",           "cast:bigint"),
+            ("file_handle_id",      "cast:bigint"),
+            ("created_by",          "cast:bigint"),
+            ("modified_by",         "cast:bigint"),
+            ("version_number",      "cast:bigint"),
+            ("snapshot_timestamp",  "cast:timestamp"),
+            ("change_timestamp",    "cast:timestamp"),
+            ("created_on",          "cast:timestamp"),
+            ("modified_on",         "cast:timestamp")
         ]
     )
 

@@ -10,19 +10,12 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import ms_to_athena_timestamp
 from utils import ms_to_partition_date
 
 # process the access record
 def transform(dynamic_record):
     # This is the partition date
     dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_timestamp"])
-   
-    # Convert all the timestamps represented as ms to an athena compatible timestamp
-    dynamic_record["snapshot_timestamp"] = ms_to_athena_timestamp(dynamic_record["snapshot_timestamp"])
-    dynamic_record["change_timestamp"] = ms_to_athena_timestamp(dynamic_record["change_timestamp"])
-    dynamic_record["created_on"] = ms_to_athena_timestamp(dynamic_record["created_on"])
-    dynamic_record["modified_on"] = ms_to_athena_timestamp(dynamic_record["modified_on"])
     
     return dynamic_record
 
@@ -77,10 +70,16 @@ def main():
     # Now cast the "ids" to actual long as well the timestamps
     output_frame = transformed_frame.resolveChoice(
         [
-            ("snapshot_timestamp", "cast:timestamp"),
-            ("change_timestamp", "cast:timestamp"),
-            ("created_on", "cast:timestamp"),
-            ("modified_on", "cast:timestamp")
+            ("change_user_id",      "cast:bigint"),
+            ("id",                  "cast:bigint"),
+            ("created_by",          "cast:bigint"),
+            ("storage_location_id", "cast:bigint"),
+            ("content_size",        "cast:bigint"),
+            ("preview_id",          "cast:bigint"),
+            ("snapshot_timestamp",  "cast:timestamp"),
+            ("change_timestamp",    "cast:timestamp"),
+            ("created_on",          "cast:timestamp"),
+            ("modified_on",         "cast:timestamp")
         ]
     )
 
