@@ -11,7 +11,6 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
-from awsglue.dynamicframe import DynamicFrame
 
 WEB_CLIENT = "Synapse-Web-Client"
 SYNAPSER_CLIENT = "synapser"
@@ -53,28 +52,28 @@ def apply_mapping(dynamic_frame):
     mapped_dynamic_frame = ApplyMapping.apply(
         frame=dynamic_frame,
         mappings=[
-            ("payload.sessionId", "string", "SESSION_ID", "string"),
-            ("payload.timestamp", "bigint", "TIMESTAMP", "bigint"),
-            ("payload.userId", "bigint", "USER_ID", "bigint"),
-            ("payload.method", "string", "METHOD", "string"),
-            ("payload.requestURL", "string", "REQUEST_URL", "string"),
-            ("payload.userAgent", "string", "USER_AGENT", "string"),
-            ("payload.host", "string", "HOST", "string"),
-            ("payload.origin", "string", "ORIGIN", "string"),
-            ("payload.xforwardedFor", "string", "X_FORWARDED_FOR", "string"),
-            ("payload.via", "string", "VIA", "string"),
-            ("payload.threadId", "bigint", "THREAD_ID", "bigint"),
-            ("payload.elapseMS", "bigint", "ELAPSE_MS", "bigint"),
-            ("payload.success", "boolean", "SUCCESS", "boolean"),
-            ("payload.stack", "string", "STACK", "string"),
-            ("payload.instance", "string", "INSTANCE", "string"),
-            ("payload.vmId", "string", "VM_Id", "string"),
-            ("payload.returnObjectId", "string", "RETURN_OBJECT_ID", "string"),
-            ("payload.queryString", "string", "QUERY_STRING", "string"),
-            ("payload.responseStatus", "bigint", "RESPONSE_STATUS", "bigint"),
-            ("payload.oauthClientId", "string", "OAUTH_CLIENT_ID", "string"),
-            ("payload.basicAuthUsername", "string", "BASIC_AUTH_USERNAME", "string"),
-            ("payload.authenticationMethod", "string", "AUTH_METHOD", "string"),
+            ("payload.sessionId", "string", "session_id", "string"),
+            ("payload.timestamp", "bigint", "timestamp", "bigint"),
+            ("payload.userId", "bigint", "user_id", "bigint"),
+            ("payload.method", "string", "method", "string"),
+            ("payload.requestURL", "string", "request_url", "string"),
+            ("payload.userAgent", "string", "user_agent", "string"),
+            ("payload.host", "string", "host", "string"),
+            ("payload.origin", "string", "origin", "string"),
+            ("payload.xforwardedFor", "string", "x_forwarded_for", "string"),
+            ("payload.via", "string", "via", "string"),
+            ("payload.threadId", "bigint", "thread_id", "bigint"),
+            ("payload.elapseMS", "bigint", "elapse_ms", "bigint"),
+            ("payload.success", "boolean", "success", "boolean"),
+            ("payload.stack", "string", "stack", "string"),
+            ("payload.instance", "string", "instance", "string"),
+            ("payload.vmId", "string", "vm_id", "string"),
+            ("payload.returnObjectId", "string", "return_object_id", "string"),
+            ("payload.queryString", "string", "query_string", "string"),
+            ("payload.responseStatus", "bigint", "response_status", "bigint"),
+            ("payload.oauthClientId", "string", "oauth_client_id", "string"),
+            ("payload.basicAuthUsername", "string", "basic_auth_username", "string"),
+            ("payload.authenticationMethod", "string", "auth_method", "string"),
         ],
         transformation_ctx="mapped_dynamic_frame")
     return mapped_dynamic_frame
@@ -82,12 +81,12 @@ def apply_mapping(dynamic_frame):
 
 # process the access record
 def transform(dynamic_record):
-    dynamic_record["NORMALIZED_METHOD_SIGNATURE"] = dynamic_record["METHOD"] + " " + get_normalized_method_signature(
-        dynamic_record["REQUEST_URL"])
-    dynamic_record["CLIENT"] = get_client(dynamic_record["USER_AGENT"])
-    dynamic_record["CLIENT_VERSION"] = get_client_version(dynamic_record["CLIENT"], dynamic_record["USER_AGENT"])
-    dynamic_record["ENTITY_ID"] = get_entity_id(dynamic_record["REQUEST_URL"])
-    timestamp = dynamic_record["TIMESTAMP"]
+    dynamic_record["normalized_method_signature"] = dynamic_record["method"] + " " + get_normalized_method_signature(
+        dynamic_record["request_url"])
+    dynamic_record["client"] = get_client(dynamic_record["user_agent"])
+    dynamic_record["client_version"] = get_client_version(dynamic_record["client"], dynamic_record["user_agent"])
+    dynamic_record["entity_id"] = get_entity_id(dynamic_record["request_url"])
+    timestamp = dynamic_record["timestamp"]
     date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
     dynamic_record["year"] = date.year
     dynamic_record["month"] = '%02d' % date.month
@@ -191,7 +190,6 @@ def main():
                               ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
     sc = SparkContext()
     glue_context = GlueContext(sc)
-    spark = glue_context.spark_session
     job = Job(glue_context)
     job.init(args["JOB_NAME"], args)
 
@@ -201,7 +199,7 @@ def main():
     type_casted_dynamic_frame = transformed_dynamic_frame.resolveChoice(specs=[("ENTITY_ID", "cast:bigint")])
 
     #  Write the processed access records to destination
-    write_dynamic_frame = glue_context.write_dynamic_frame.from_catalog(
+    glue_context.write_dynamic_frame.from_catalog(
         frame=type_casted_dynamic_frame,
         database=args["DATABASE_NAME"],
         table_name=args["TABLE_NAME"],

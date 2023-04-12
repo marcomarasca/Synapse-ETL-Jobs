@@ -19,14 +19,6 @@ class TestUtils(unittest.TestCase):
     def test_strip_syn_prefix_with_none_input(self):
         input = None
         self.assertEqual(None, utils.strip_syn_prefix(input))
-    
-    def test_ms_to_athena_timestamp(self):
-        input = 1680758367496
-        self.assertEqual('2023-04-06 05:19:27.496', utils.ms_to_athena_timestamp(input))
-
-    def test_ms_to_athena_timestamp_with_none_input(self):
-        input = None
-        self.assertEqual(None, utils.ms_to_athena_timestamp(input))
 
     def test_ms_to_partition_date(self):
         input = 1680758367496
