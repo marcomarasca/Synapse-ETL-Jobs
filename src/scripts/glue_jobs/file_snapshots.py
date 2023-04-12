@@ -15,7 +15,7 @@ from utils import ms_to_partition_date
 # process the access record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_timestamp"])
+    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
     
     return dynamic_record
 
@@ -43,13 +43,15 @@ def main():
     mapped_frame = input_frame.apply_mapping(
         [
             ("changeType",                  "string",   "change_type",          "string"),
-            ("changeTimestamp",             "bigint",   "change_timestamp",     "bigint"),
+            ("changeTimestamp",             "bigint",   "change_timestamp",     "timestamp"),
             ("userId",                      "bigint",   "change_user_id",       "bigint"),
-            ("snapshotTimestamp",           "bigint",   "snapshot_timestamp",   "bigint"),
+            ("snapshotTimestamp",           "bigint",   "snapshot_timestamp",   "timestamp"),
+            # Note that we map the same timestamp into a bigint so that we can extract the partition date
+            ("snapshotTimestamp",           "bigint",   "snapshot_date",        "bigint"),
             ("snapshot.id",                 "string",   "id",                   "bigint"),
             ("snapshot.createdBy",          "string",   "created_by",           "bigint"),
-            ("snapshot.createdOn",          "bigint",   "created_on",           "bigint"),
-            ("snapshot.modifiedOn",         "bigint",   "modified_on",          "bigint"),
+            ("snapshot.createdOn",          "bigint",   "created_on",           "timestamp"),
+            ("snapshot.modifiedOn",         "bigint",   "modified_on",          "timestamp"),
             ("snapshot.concreteType",       "string",   "concrete_type",        "string"),
             ("snapshot.contentMd5",         "string",   "content_md5",          "string"),
             ("snapshot.contentType",        "string",   "content_type",         "string"),
@@ -65,23 +67,10 @@ def main():
     )
 
     # Apply transformations (compute the partition and convert timstamps)
-    transformed_frame = mapped_frame.map(f=transform)
+    transformed_frame = mapped_frame.map(f=transform, info='file_transform')
     
-    # Now cast the "ids" to actual long as well the timestamps
-    output_frame = transformed_frame.resolveChoice(
-        [
-            ("change_user_id",      "cast:bigint"),
-            ("id",                  "cast:bigint"),
-            ("created_by",          "cast:bigint"),
-            ("storage_location_id", "cast:bigint"),
-            ("content_size",        "cast:bigint"),
-            ("preview_id",          "cast:bigint"),
-            ("snapshot_timestamp",  "cast:timestamp"),
-            ("change_timestamp",    "cast:timestamp"),
-            ("created_on",          "cast:timestamp"),
-            ("modified_on",         "cast:timestamp")
-        ]
-    )
+    # Use the catalog table to resolve any ambiguity
+    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
 
     # Write only if there is new data (this will error out otherwise)
     if (output_frame.count() > 0):
