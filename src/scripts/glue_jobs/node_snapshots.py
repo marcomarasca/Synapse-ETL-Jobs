@@ -10,7 +10,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import strip_syn_prefix
+from utils import syn_id_string_to_int
 from utils import ms_to_partition_date
 
 # process the access record
@@ -19,11 +19,11 @@ def transform(dynamic_record):
     dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
     
     # The records come in with the syn prefix, we need to remove that
-    dynamic_record["id"] = int(strip_syn_prefix(dynamic_record["id"]))
-    dynamic_record["benefactor_id"] = int(strip_syn_prefix(dynamic_record["benefactor_id"]))
-    dynamic_record["project_id"] = int(strip_syn_prefix(dynamic_record["project_id"]))
-    dynamic_record["parent_id"] = int(strip_syn_prefix(dynamic_record["parent_id"]))
-    dynamic_record["file_handle_id"] = int(strip_syn_prefix(dynamic_record["file_handle_id"]))
+    dynamic_record["id"] = syn_id_string_to_int(dynamic_record["id"])
+    dynamic_record["benefactor_id"] = syn_id_string_to_int(dynamic_record["benefactor_id"])
+    dynamic_record["project_id"] = syn_id_string_to_int(dynamic_record["project_id"])
+    dynamic_record["parent_id"] = syn_id_string_to_int(dynamic_record["parent_id"])
+    dynamic_record["file_handle_id"] = syn_id_string_to_int(dynamic_record["file_handle_id"])
     
     return dynamic_record
 
