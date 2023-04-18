@@ -4,7 +4,6 @@ This script executed by a Glue job. The job take the access record data from S3 
 """
 
 import sys
-import datetime
 import re
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions

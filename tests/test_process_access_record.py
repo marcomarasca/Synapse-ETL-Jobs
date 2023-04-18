@@ -1,5 +1,8 @@
 import unittest
+import sys
+from unittest.mock import Mock
 
+sys.modules['utils'] = Mock()
 from src.scripts.glue_jobs import process_access_record
 
 
