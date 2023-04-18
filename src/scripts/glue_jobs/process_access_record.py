@@ -1,16 +1,17 @@
 """
 This script executed by a Glue job. The job take the access record data from S3 and process it.
- Processed data stored in S3 in a parquet file partitioned by timestamp of record as  year / month / day.
+ Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d pattern) of the timestamp.
 """
 
 import sys
-import datetime
 import re
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
+
+from utils import ms_to_partition_date
 
 WEB_CLIENT = "Synapse-Web-Client"
 SYNAPSER_CLIENT = "synapser"
@@ -53,7 +54,9 @@ def apply_mapping(dynamic_frame):
         frame=dynamic_frame,
         mappings=[
             ("payload.sessionId", "string", "session_id", "string"),
-            ("payload.timestamp", "bigint", "timestamp", "bigint"),
+            ("payload.timestamp", "bigint", "timestamp", "timestamp"),
+            # we need to map the same timestamp into a bigint so that we can extract the partition date
+            ("payload.timestamp", "bigint", "record_date", "bigint"),
             ("payload.userId", "bigint", "user_id", "bigint"),
             ("payload.method", "string", "method", "string"),
             ("payload.requestURL", "string", "request_url", "string"),
@@ -86,11 +89,8 @@ def transform(dynamic_record):
     dynamic_record["client"] = get_client(dynamic_record["user_agent"])
     dynamic_record["client_version"] = get_client_version(dynamic_record["client"], dynamic_record["user_agent"])
     dynamic_record["entity_id"] = get_entity_id(dynamic_record["request_url"])
-    timestamp = dynamic_record["timestamp"]
-    date = datetime.datetime.utcfromtimestamp(timestamp / 1000.0)
-    dynamic_record["year"] = date.year
-    dynamic_record["month"] = '%02d' % date.month
-    dynamic_record["day"] = '%02d' % date.day
+    # This is the partition date
+    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
     return dynamic_record
 
 
@@ -194,16 +194,17 @@ def main():
     job.init(args["JOB_NAME"], args)
 
     dynamic_frame = get_dynamic_frame("s3", "json", args["S3_SOURCE_PATH"], glue_context)
-    mapped_dynamic_frame = apply_mapping(dynamic_frame)
-    transformed_dynamic_frame = mapped_dynamic_frame.map(f=transform)
-    type_casted_dynamic_frame = transformed_dynamic_frame.resolveChoice(specs=[("ENTITY_ID", "cast:bigint")])
+    mapped_frame = apply_mapping(dynamic_frame)
+    transformed_frame = mapped_frame.map(f=transform)
+    # Use the catalog table to resolve any ambiguity
+    type_casted_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
 
     #  Write the processed access records to destination
     glue_context.write_dynamic_frame.from_catalog(
-        frame=type_casted_dynamic_frame,
+        frame=type_casted_frame,
         database=args["DATABASE_NAME"],
         table_name=args["TABLE_NAME"],
-        additional_options={"partitionKeys": ["year", "month", "day"]},
+        additional_options={"partitionKeys": ["record_date"]},
         transformation_ctx="write_dynamic_frame")
 
     job.commit()
