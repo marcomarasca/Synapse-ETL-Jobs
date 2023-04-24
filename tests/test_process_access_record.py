@@ -152,12 +152,12 @@ class TestTransformedAccessRecord(unittest.TestCase):
         self.assertIsNone(real_output)
 
     def test_get_entity_id_for_syn_id(self):
-        expected_output = "12223809"
+        expected_output = 12223809
         real_output = process_access_record.get_entity_id("/repo/v1/entity/syn12223809")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_id_without_syn(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = process_access_record.get_entity_id("/repo/v1/entity/1234")
         self.assertEqual(expected_output, real_output)
 
@@ -170,16 +170,16 @@ class TestTransformedAccessRecord(unittest.TestCase):
         self.assertIsNone(real_output)
 
     def test_get_entity_id_for_url_having_two_syn(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = process_access_record.get_entity_id("/repo/v1/entity/syn1234/check/syn123456")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_case_insensitive(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = process_access_record.get_entity_id("/repo/v1/entity/Syn1234/check")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_with_version(self):
-        expected_output = "12345"
+        expected_output = 12345
         real_output = process_access_record.get_entity_id("/repo/v1/entity/SYN12345.1/check")
         self.assertEqual(expected_output, real_output)
