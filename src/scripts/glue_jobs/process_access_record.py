@@ -181,7 +181,7 @@ def get_entity_id(requesturl):
             entity_id = matcher.group(1)
             if entity_id.startswith("syn"):
                 entity_id = entity_id[3:]
-    return entity_id
+    return int(entity_id)
 
 
 def main():
