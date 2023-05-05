@@ -15,6 +15,7 @@ from utils import ms_to_partition_date
 def transform(dynamic_record):
     # This is the partition date
     dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
+    # Get the first email if list is not empty and add email as field to dynamic frame
     dynamic_record["email"] = get_email(dynamic_record["emails"])
     return dynamic_record
 
@@ -62,6 +63,7 @@ def main():
 
     # Apply transformations
     transformed_frame = mapped_frame.map(f=transform)
+    # Filed emails is list , which we need to get first email from list if it's not empty, so drop emails field
     droppedColumn_frame = transformed_frame.drop_fields(paths=["emails"], transformation_ctx="droppedColumn_frame")
     # Use the catalog table to resolve any ambiguity
     output_frame = droppedColumn_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
