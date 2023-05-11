@@ -40,12 +40,13 @@ def main():
     # Maps the incoming record to flatten table
     mapped_frame = input_frame.apply_mapping(
         [
-            ("timestamp", "bigint", "timestamp", "timestamp"),
+            ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+            ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
             # Note that we map the same timestamp into a bigint so that we can extract the partition date
-            ("timestamp", "bigint", "snapshot_date", "bigint"),
-            ("payload.id", "string", "id", "bigint"),
-            ("payload.isIndividual", "boolean", "is_individual", "boolean"),
-            ("payload.creationDate", "bigint", "created_on", "timestamp"),
+            ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
+            ("snapshot.id", "string", "id", "bigint"),
+            ("snapshot.isIndividual", "boolean", "is_individual", "boolean"),
+            ("snapshot.creationDate", "bigint", "created_on", "timestamp"),
         ]
     )
 
