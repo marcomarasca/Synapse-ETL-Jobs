@@ -47,17 +47,18 @@ def main():
     # Maps the incoming record to flatten table
     mapped_frame = input_frame.apply_mapping(
         [
-            ("timestamp", "bigint", "timestamp", "timestamp"),
+            ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+            ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
             # Note that we map the same timestamp into a bigint so that we can extract the partition date
-            ("timestamp", "bigint", "snapshot_date", "bigint"),
-            ("payload.ownerId", "string", "id", "bigint"),
-            ("payload.userName", "string", "user_name", "string"),
-            ("payload.firstName", "string", "first_name", "string"),
-            ("payload.lastName", "string", "last_name", "string"),
-            ("payload.emails", "array", "emails", "array"),
-            ("payload.location", "string", "location", "string"),
-            ("payload.company", "string", "company", "string"),
-            ("payload.position", "string", "position", "string"),
+            ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
+            ("snapshot.ownerId", "string", "id", "bigint"),
+            ("snapshot.userName", "string", "user_name", "string"),
+            ("snapshot.firstName", "string", "first_name", "string"),
+            ("snapshot.lastName", "string", "last_name", "string"),
+            ("snapshot.emails", "array", "emails", "array"),
+            ("snapshot.location", "string", "location", "string"),
+            ("snapshot.company", "string", "company", "string"),
+            ("snapshot.position", "string", "position", "string"),
         ]
     )
 
