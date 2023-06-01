@@ -1,5 +1,5 @@
 """
-The job take the file download from S3 and process it.
+The job take the file event records from S3 and process it.
 Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d pattern) of the record timestamp.
 """
 
@@ -13,7 +13,7 @@ from awsglue.job import Job
 from utils import ms_to_partition_date
 from utils import syn_id_string_to_int
 
-# process the file download record
+# process the file event record
 def transform(dynamic_record):
     # This is the partition date
     dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
