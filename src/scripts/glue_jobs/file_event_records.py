@@ -47,13 +47,15 @@ def main():
     mapped_frame = input_frame.apply_mapping(
         [
             ("payload.userId", "bigint", "user_id", "bigint"),
-            ("payload.timestamp", "bigint", "timestamp", "timestamp"),
+            ("timestamp", "bigint", "timestamp", "timestamp"),
             # we need to map the same timestamp into a bigint so that we can extract the partition date
-            ("payload.timestamp", "bigint", "record_date", "bigint"),
+            ("timestamp", "bigint", "record_date", "bigint"),
             ("payload.projectId", "bigint", "project_id", "bigint"),
             ("payload.fileHandleId", "string", "file_handle_id", "bigint"),
             ("payload.associateType", "string", "association_object_type", "string"),
             ("payload.associateId", "string", "association_object_id", "string"),
+            ("stack", "string", "stack", "string"),
+            ("instance", "string", "instance", "string")
         ]
     )
 
