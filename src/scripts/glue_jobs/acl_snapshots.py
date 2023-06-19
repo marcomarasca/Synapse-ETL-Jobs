@@ -10,11 +10,14 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from utils import ms_to_partition_date
+from utils import syn_id_string_to_int
 
 # process the acl record
 def transform(dynamic_record):
     # This is the partition date
     dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
+    # The records come in with the syn prefix, we need to remove that
+    dynamic_record["owner_id"] = syn_id_string_to_int(dynamic_record["owner_id"])
     return dynamic_record
 
 def main():
@@ -45,7 +48,7 @@ def main():
             ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
             # Note that we map the same timestamp into a bigint so that we can extract the partition date
             ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
-            ("snapshot.id", "string", "owner_id", "bigint"),
+            ("snapshot.id", "string", "owner_id", "string"),
             ("snapshot.ownerType", "string", "owner_type", "string"),
             ("snapshot.creationDate", "bigint", "created_on", "timestamp"),
             ("snapshot.resourceAccess", "array", "resource_access", "array")
