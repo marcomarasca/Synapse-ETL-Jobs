@@ -91,6 +91,7 @@ def transform(dynamic_record):
     dynamic_record["entity_id"] = get_entity_id(dynamic_record["request_url"])
     # This is the partition date
     dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
+    dynamic_record["instance"] = (dynamic_record["instance"]).lstrip("0")
     return dynamic_record
 
 
