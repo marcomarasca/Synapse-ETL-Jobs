@@ -13,10 +13,11 @@ from pyspark.sql.functions import input_file_name
 from awsglue.dynamicframe import DynamicFrame
 from awsglue.job import Job
 from dateutil import parser
-from datetime import datetime
+from backfill_utils import get_date_from_absolute_file_name
 import json
 
-args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "S3_DESTINATION_PATH", "RELEASE_NUMBER"])
+args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "S3_DESTINATION_PATH", "RELEASE_NUMBER", "STACK",
+                                     "NODE_RECORD_TYPE"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -35,7 +36,7 @@ input_frame = glueContext.create_dynamic_frame.from_options(
     connection_type="s3",
     format="csv",
     connection_options={
-        "paths": [args["S3_SOURCE_PATH"] + args["RELEASE_NUMBER"] + "/noderecord/"],
+        "paths": [args["S3_SOURCE_PATH"] + args["RELEASE_NUMBER"] + + "/" + args["NODE_RECORD_TYPE"] + "/"],
         "recurse": True,
     },
     transformation_ctx="input_frame",
@@ -72,20 +73,25 @@ def populate_fields(dynamic_record):
             jsn[field] = None
 
     dynamic_record["objectType"] = "ENTITY"
-    dynamic_record["stack"] = "dev"
+    dynamic_record["stack"] = args["STACK"]
     dynamic_record["instance"] = (args["RELEASE_NUMBER"]).lstrip("0")
-    dynamic_record["userId"] = jsn["modifiedByPrincipalId"]
 
-    modified_on = parser.parse(jsn["modifiedOn"])
-    created_on = parser.parse(jsn["createdOn"])
-    time_delta = (modified_on - created_on).total_seconds()
-    if time_delta >= 1:
-        dynamic_record["changeType"] = "UPDATE"
-    else:
-        dynamic_record["changeType"] = "CREATE"
+    if args["NODE_RECORD_TYPE"] == "noderecord":
+        dynamic_record["userId"] = jsn["modifiedByPrincipalId"]
+        modified_on = parser.parse(jsn["modifiedOn"])
+        created_on = parser.parse(jsn["createdOn"])
+        time_delta = (modified_on - created_on).total_seconds()
+        if time_delta >= 1:
+            dynamic_record["changeType"] = "UPDATE"
+        else:
+            dynamic_record["changeType"] = "CREATE"
 
-    jsn["modifiedOn"] = int(modified_on.timestamp() * 1000)
-    jsn["createdOn"] = int(created_on.timestamp() * 1000)
+        jsn["modifiedOn"] = int(modified_on.timestamp() * 1000)
+        jsn["createdOn"] = int(created_on.timestamp() * 1000)
+
+    if args["NODE_RECORD_TYPE"] == "deletednode":
+        dynamic_record["userId"] = None
+        dynamic_record["changeType"] = "DELETE"
 
     dynamic_record["snapshot"] = jsn
     return dynamic_record
@@ -93,12 +99,7 @@ def populate_fields(dynamic_record):
 
 # add year,month and day for partitioning
 def add_partition_fields(dynamic_record):
-    file_name = dynamic_record["filename"]
-    print("filename " + file_name)
-    last_slash_index = file_name.rfind("/")
-    second_last_index = file_name.rfind("/", 0, last_slash_index - 1)
-    date_string = file_name[second_last_index + 1: last_slash_index]
-    date = datetime.strptime(date_string, '%Y-%m-%d')
+    date = get_date_from_absolute_file_name(dynamic_record["filename"])
     dynamic_record["snapshotTimestamp"] = int(date.timestamp() * 1000)
     dynamic_record["year"] = date.year
     dynamic_record["month"] = '%02d' % date.month
