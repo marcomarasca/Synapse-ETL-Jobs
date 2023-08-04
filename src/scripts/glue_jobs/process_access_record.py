@@ -59,6 +59,7 @@ def apply_mapping(dynamic_frame):
             ("payload.timestamp", "bigint", "record_date", "bigint"),
             ("payload.userId", "bigint", "user_id", "bigint"),
             ("payload.method", "string", "method", "string"),
+            ("payload.objectConcreteType", "string", "concrete_type", "string"),
             ("payload.requestURL", "string", "request_url", "string"),
             ("payload.userAgent", "string", "user_agent", "string"),
             ("payload.host", "string", "host", "string"),
