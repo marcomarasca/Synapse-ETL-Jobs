@@ -11,7 +11,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import ms_to_partition_date
+from utils import *
 
 WEB_CLIENT = "Synapse-Web-Client"
 SYNAPSER_CLIENT = "synapser"
@@ -59,6 +59,7 @@ def apply_mapping(dynamic_frame):
             ("payload.timestamp", "bigint", "record_date", "bigint"),
             ("payload.userId", "bigint", "user_id", "bigint"),
             ("payload.method", "string", "method", "string"),
+            ("payload.requestConcreteType", "string", "request_concrete_type", "string"),
             ("payload.requestURL", "string", "request_url", "string"),
             ("payload.userAgent", "string", "user_agent", "string"),
             ("payload.host", "string", "host", "string"),
@@ -91,7 +92,7 @@ def transform(dynamic_record):
     dynamic_record["entity_id"] = get_entity_id(dynamic_record["request_url"])
     # This is the partition date
     dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
-    dynamic_record["instance"] = (dynamic_record["instance"]).lstrip("0")
+    dynamic_record["instance"] = remove_padded_leading_zeros(dynamic_record["instance"])
     return dynamic_record
 
 
