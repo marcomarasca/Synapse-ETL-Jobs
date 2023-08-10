@@ -10,21 +10,12 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import ms_to_partition_date
-from utils import syn_id_string_to_int
+from dynamic_frame_mapping import *
+from dynamic_record_transformation import *
 
-# process the file event record
-def transform(dynamic_record):
-    # This is the partition date
-    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
-
-    # The records come in with the syn prefix, we need to remove that
-    dynamic_record["association_object_id"] = syn_id_string_to_int(dynamic_record["association_object_id"])
-
-    return dynamic_record
 
 def main():
-    args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
+    args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME", "FILE_EVENT_TYPE"])
     sc = SparkContext()
     glue_context = GlueContext(sc)
 
@@ -43,27 +34,16 @@ def main():
         transformation_ctx="input_frame"
     )
 
-    # Maps the incoming record to a flatten table
-    mapped_frame = input_frame.apply_mapping(
-        [
-            ("payload.userId", "bigint", "user_id", "bigint"),
-            ("timestamp", "bigint", "timestamp", "timestamp"),
-            # we need to map the same timestamp into a bigint so that we can extract the partition date
-            ("timestamp", "bigint", "record_date", "bigint"),
-            ("payload.projectId", "bigint", "project_id", "bigint"),
-            ("payload.fileHandleId", "string", "file_handle_id", "bigint"),
-            ("payload.associateType", "string", "association_object_type", "string"),
-            ("payload.associateId", "string", "association_object_id", "string"),
-            ("stack", "string", "stack", "string"),
-            ("instance", "string", "instance", "string")
-        ]
-    )
-
-    # Apply transformations
-    transformed_frame = mapped_frame.map(f=transform, info='file_transform')
+    if args["FILE_EVENT_TYPE"] == "download":
+        mapped_frame = file_download_record_mapping(input_frame)
+        transformed_frame = mapped_frame.map(f=file_download_record_transformation, info='file_transform')
+    else:
+        mapped_frame = file_upload_record_mapping(input_frame)
+        transformed_frame = mapped_frame.map(f=file_upload_record_transformation, info='file_transform')
 
     # Use the catalog table to resolve any ambiguity
-    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
+    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
+                                                   table_name=args['TABLE_NAME'])
 
     # Write only if there is new data (this will error out otherwise)
     if (output_frame.count() > 0):
