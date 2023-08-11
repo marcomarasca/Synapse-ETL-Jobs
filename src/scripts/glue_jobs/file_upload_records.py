@@ -1,5 +1,5 @@
 """
-The job take the file event records from S3 and process it.
+The job take the file upload records from S3 and process it.
 Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d pattern) of the record timestamp.
 """
 
@@ -13,15 +13,20 @@ from awsglue.job import Job
 from utils import ms_to_partition_date
 from utils import syn_id_string_to_int
 
-# process the file event record
+RECORD_DATE = "record_date"
+ASSOCIATED_OBJECT_ID = "association_object_id"
+
+
+# process the file upload record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
+    dynamic_record[RECORD_DATE] = ms_to_partition_date(dynamic_record[RECORD_DATE])
 
     # The records come in with the syn prefix, we need to remove that
-    dynamic_record["association_object_id"] = syn_id_string_to_int(dynamic_record["association_object_id"])
+    dynamic_record[ASSOCIATED_OBJECT_ID] = syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
 
     return dynamic_record
+
 
 def main():
     args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
@@ -63,18 +68,20 @@ def main():
     transformed_frame = mapped_frame.map(f=transform, info='file_transform')
 
     # Use the catalog table to resolve any ambiguity
-    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
+    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
+                                                   table_name=args['TABLE_NAME'])
 
     # Write only if there is new data (this will error out otherwise)
-    if (output_frame.count() > 0):
+    if output_frame.count() > 0:
         glue_context.write_dynamic_frame.from_catalog(
             frame=output_frame,
             database=args["DATABASE_NAME"],
             table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": ["record_date"]}
+            additional_options={"partitionKeys": [RECORD_DATE]}
         )
 
     job.commit()
+
 
 if __name__ == "__main__":
     main()
