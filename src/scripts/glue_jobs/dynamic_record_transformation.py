@@ -6,14 +6,14 @@ see link: https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspar
 DynamicRecord : a DynamicRecord represents a logical record within a DynamicFrame. It is like a row in a Spark
 DataFrame. see link: https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-dynamic-frame.html
 
-This script is used to perform transformation on dynamic record, e.g, computing value for a column.
+This script is used to perform transformations on dynamic record, such as computing value for a column.
 
 """
 
 from utils import *
 
 DOWNLOADED_FILE_HANDLE_ID = "downloaded_file_handle_id"
-FILE_HANDLE_ID = "file_handle_id"
+REQUESTED_FILE_HANDLE_ID = "requested_file_handle_id"
 RECORD_DATE = "record_date"
 ASSOCIATED_OBJECT_ID = "association_object_id"
 
@@ -26,7 +26,7 @@ def file_download_record_transformation(dynamic_record):
     if DOWNLOADED_FILE_HANDLE_ID in dynamic_record.keys():
         downloaded_id = dynamic_record[DOWNLOADED_FILE_HANDLE_ID]
     if downloaded_id is None:
-        dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[FILE_HANDLE_ID]
+        dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[REQUESTED_FILE_HANDLE_ID]
 
     return dynamic_record
 
