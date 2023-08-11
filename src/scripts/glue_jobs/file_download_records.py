@@ -25,7 +25,7 @@ def transform(dynamic_record):
     dynamic_record[RECORD_DATE] = ms_to_partition_date(dynamic_record[RECORD_DATE])
     # The records come in with the syn prefix, we need to remove that
     dynamic_record[ASSOCIATED_OBJECT_ID] = syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
-
+    # If downloaded file handle id is not present in the record, or it's null then file handle id should be assigned to it.
     if DOWNLOADED_FILE_HANDLE_ID not in dynamic_record.keys() or dynamic_record[DOWNLOADED_FILE_HANDLE_ID] is None:
         dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[FILE_HANDLE_ID]
 
