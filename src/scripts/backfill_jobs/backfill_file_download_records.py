@@ -1,3 +1,7 @@
+"""This script executed by a Glue job for back-filling the file download records. The job take the file download
+records data from S3 which is in csv format and process it. Processed data stored in S3 in a json format and
+partitioned by record date  as  year / month / day. """
+
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -19,7 +23,7 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-
+# In case of bulk download, there is fileSummary array. create single file download record from each array element
 def transform_bulk_download(dynamic_record):
     try:
         jsn = json.loads(dynamic_record["col2"])
