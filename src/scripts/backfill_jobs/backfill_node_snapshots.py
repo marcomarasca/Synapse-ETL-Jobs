@@ -36,7 +36,7 @@ input_frame = glueContext.create_dynamic_frame.from_options(
     connection_type="s3",
     format="csv",
     connection_options={
-        "paths": [args["S3_SOURCE_PATH"] + args["RELEASE_NUMBER"] + + "/" + args["NODE_RECORD_TYPE"] + "/"],
+        "paths": [args["S3_SOURCE_PATH"] + args["RELEASE_NUMBER"] + "/" + args["NODE_RECORD_TYPE"] + "/"],
         "recurse": True,
     },
     transformation_ctx="input_frame",
