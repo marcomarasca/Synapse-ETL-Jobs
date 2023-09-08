@@ -16,3 +16,7 @@ def remove_padded_leading_zeros(input_string):
     if input_string is None:
         return input_string
     return input_string.lstrip("0")
+
+
+def ms_to_formatted_date(timestamp_ms, date_format):
+    return datetime.strptime(datetime.utcfromtimestamp(timestamp_ms / 1000.0).strftime(date_format), date_format).date()
