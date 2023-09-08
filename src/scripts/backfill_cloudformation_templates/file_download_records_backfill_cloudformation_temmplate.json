@@ -195,7 +195,7 @@
         },
         "DefaultArguments": {
           "--enable-continuous-cloudwatch-log": "true",
-          "--job-bookmark-option": "job-bookmark-disable",
+          "--job-bookmark-option": "job-bookmark-enable",
           "--enable-metrics": "true",
           "--enable-spark-ui": "true",
           "--job-language": "python",
