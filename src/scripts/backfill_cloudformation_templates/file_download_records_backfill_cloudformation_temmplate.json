@@ -199,7 +199,7 @@
           "--enable-metrics": "true",
           "--enable-spark-ui": "true",
           "--job-language": "python",
-          "--S3_SOURCE_PATH": "s3://prod.log.sagebase.org/duplicatedownloads/",
+          "--S3_SOURCE_PATH": "s3://prod.log.sagebase.org/deduplicatedownloads/",
           "--FORMAT": "json",
           "--S3_DESTINATION_PATH": "s3://prod.log.sagebase.org/fileDownloadRecords/records/",
           "--extra-py-files": "s3://prod.aws-glue.sagebase.org/scripts/backfill/backfill_utils.py"
