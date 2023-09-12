@@ -133,8 +133,6 @@ if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
     if final_frame.stageErrorsCount() > 0 or exploded_frame.stageErrorsCount() > 0 or mapped_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
         raise Exception("Error in job! See the log!")
 
-    repartitioned_frame = final_frame.repartition(1)
-
 if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
     transformed_frame = input_frame.map(f=transform_download)
     final_frame = ApplyMapping.apply(
@@ -157,9 +155,8 @@ if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
     if final_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
         raise Exception("Error in job! See the log!")
 
-    repartitioned_frame = final_frame.repartition(1)
-output_frame = repartitioned_frame.resolveChoice(choice='match_catalog', database=args['DESTINATION_DATABASE_NAME'],
-                                                 table_name=args['DESTINATION_TABLE_NAME'])
+output_frame = final_frame.resolveChoice(choice='match_catalog', database=args['DESTINATION_DATABASE_NAME'],
+                                         table_name=args['DESTINATION_TABLE_NAME'])
 if output_frame.count() > 0:
     glueContext.write_dynamic_frame.from_catalog(
         frame=output_frame,
