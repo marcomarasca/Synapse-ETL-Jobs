@@ -135,12 +135,15 @@
           "--enable-metrics": "true",
           "--enable-spark-ui": "true",
           "--job-language": "python",
-          "--S3_SOURCE_PATH": "s3://prod.snapshot.record.sagebase.org/",
           "--RELEASE_NUMBER": "000000400",
-          "--DATABASE_NAME": "warehouse",
-          "--TABLE_NAME": "allfiledownloads",
+          "--SOURCE_DATABASE_NAME": "warehouse",
+          "--SOURCE_TABLE_NAME": "filedownloadscsv",
+          "--DESTINATION_DATABASE_NAME": "warehouse",
+          "--DESTINATION_TABLE_NAME": "allfiledownloads",
           "--FILE_DOWNLOAD_TYPE": "filedownloadrecord",
           "--STACK": "prod",
+          "--START_DATE": "2023-01-01",
+          "--END_DATE": "2023-12-31",
           "--extra-py-files": "s3://prod.aws-glue.sagebase.org/scripts/backfill/backfill_utils.py,s3://aws-glue-studio-transforms-510798373988-prod-us-east-1/gs_explode.py,s3://aws-glue-studio-transforms-510798373988-prod-us-east-1/gs_common.py"
         },
         "Description": "This job back fill the old data-ware house file download records",
@@ -268,7 +271,7 @@
               "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
             },
             "Compressed": true,
-            "Location": "s3://prod.log.sagebase.org/alldownloads/"
+            "Location": "s3://prod.log.sagebase.org/allfiledownloads/"
           },
           "PartitionKeys": [
             {

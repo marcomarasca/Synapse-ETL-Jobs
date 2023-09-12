@@ -1,5 +1,3 @@
-"""This script executed by a Glue job for back-filling the old data-ware house file download records. The job take the file download
-records data from S3 which is in csv format and process it. Processed data stored in a table"""
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -8,22 +6,22 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 import gs_explode
 import json
-
 from backfill_utils import *
 
 args = getResolvedOptions(sys.argv,
-                          ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME", "FILE_DOWNLOAD_TYPE", "STACK",
-                           "RELEASE_NUMBER"])
+                          ["JOB_NAME", "DESTINATION_DATABASE_NAME", "SOURCE_DATABASE_NAME", "DESTINATION_TABLE_NAME", "SOURCE_TABLE_NAME", "FILE_DOWNLOAD_TYPE", "STACK",
+                           "RELEASE_NUMBER", "START_DATE", "END_DATE"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
+predicate = "(release_number == " + args["RELEASE_NUMBER"] + " and ( record_date>='" + args["START_DATE"] + "' and record_date<='" + args["END_DATE"] + "'))"
 
 def transform_bulk_download(dynamic_record):
     try:
-        jsn = json.loads(dynamic_record["col2"])
+        jsn = json.loads(dynamic_record["json"])
         file_info = []
         file_summary_array = get_key_from_json_payload(jsn, "fileSummary")
         for file in file_summary_array:
@@ -51,7 +49,7 @@ def get_key_from_json_payload(json_payload, key):
 
 def transform_download(dynamic_record):
     try:
-        jsn = json.loads(dynamic_record["col2"])
+        jsn = json.loads(dynamic_record["json"])
         for key in jsn:
             if key == "downloadedFile":
                 dynamic_record["file_handle_id"] = jsn["downloadedFile"]["fileHandleId"]
@@ -70,7 +68,7 @@ def add_common_fields(json_payload, dynamic_record):
     try:
         dynamic_record["stack"] = args["STACK"]
         dynamic_record["instance"] = args["RELEASE_NUMBER"].lstrip("0")
-        dynamic_record["timestamp"] = int(dynamic_record["col0"])
+        dynamic_record["timestamp"] = int(dynamic_record["timestamp"])
         dynamic_record["user_id"] = get_key_from_json_payload(json_payload, "userId")
         dynamic_record["downloaded_file_handle_id"] = get_key_from_json_payload(json_payload, "resultZipFileHandleId")
         dynamic_record["project_id"] = None
@@ -84,23 +82,14 @@ def add_common_fields(json_payload, dynamic_record):
         print("exception in partition", type(e).__name__)
 
 
-input_frame = glueContext.create_dynamic_frame.from_options(
-    format_options={
-        "quoteChar": '"',
-        "withHeader": False,
-        "separator": ",",
-        "multiline": True,
-        "optimizePerformance": False,
-    },
-    connection_type="s3",
-    format="csv",
-    connection_options={
-        "paths": [args["S3_SOURCE_PATH"] + args["RELEASE_NUMBER"] + "/" +args["FILE_DOWNLOAD_TYPE"] + "/"],
-        "recurse": True,
-    },
+# Script generated for node S3 bucket
+input_frame = glueContext.create_dynamic_frame.from_catalog(
+    database=args["SOURCE_DATABASE_NAME"],
+    table_name=args["SOURCE_TABLE_NAME"],
     transformation_ctx="input_frame",
+    push_down_predicate=predicate
 )
-#need to change
+
 if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
     input_frame.printSchema()
     transformed_frame = input_frame.map(f=transform_bulk_download)
@@ -149,7 +138,7 @@ if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
         raise Exception("Error in job! See the log!")
 
     repartitioned_frame = final_frame.repartition(1)
-#need to change
+
 if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
     transformed_frame = input_frame.map(f=transform_download)
     transformed_frame.printSchema()
@@ -175,14 +164,13 @@ if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
         raise Exception("Error in job! See the log!")
 
     repartitioned_frame = final_frame.repartition(1)
-
-output_frame = repartitioned_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
-                                                 table_name=args['TABLE_NAME'])
+output_frame = repartitioned_frame.resolveChoice(choice='match_catalog', database=args['DESTINATION_DATABASE_NAME'],
+                                                 table_name=args['DESTINATION_TABLE_NAME'])
 if output_frame.count() > 0:
     glueContext.write_dynamic_frame.from_catalog(
         frame=output_frame,
-        database=args["DATABASE_NAME"],
-        table_name=args["TABLE_NAME"],
+        database=args["DESTINATION_DATABASE_NAME"],
+        table_name=args["DESTINATION_TABLE_NAME"],
         additional_options={"partitionKeys": ["record_date"]}
     )
 

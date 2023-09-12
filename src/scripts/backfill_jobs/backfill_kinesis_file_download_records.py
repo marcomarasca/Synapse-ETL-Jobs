@@ -35,7 +35,7 @@ input_frame = glueContext.create_dynamic_frame.from_options(
     connection_type="s3",
     format="parquet",
     connection_options={
-        "paths": [args["S3_SOURCE_PATH"] + "year=" + args["YEAR"] + "month=" + args["MONTH"]],
+        "paths": [args["S3_SOURCE_PATH"] + "year=" + args["YEAR"] + "month=" + args["MONTH"] + "/"],
         "recurse": True,
     },
     transformation_ctx="input_frame",
