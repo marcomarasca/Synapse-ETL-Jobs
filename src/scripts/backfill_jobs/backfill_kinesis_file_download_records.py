@@ -40,7 +40,6 @@ input_frame = glueContext.create_dynamic_frame.from_options(
     },
     transformation_ctx="input_frame",
 )
-input_frame.printSchema()
 
 mapped_frame = ApplyMapping.apply(
     frame=input_frame,
@@ -56,10 +55,8 @@ mapped_frame = ApplyMapping.apply(
     ],
     transformation_ctx="mapped_frame",
 )
-mapped_frame.printSchema()
 
 transformed_frame = mapped_frame.map(f=transform)
-transformed_frame.printSchema()
 if transformed_frame.stageErrorsCount() > 0 or mapped_frame.stageErrorsCount() > 0:
     raise Exception("Error in job! See the log!")
 repartitioned_frame = transformed_frame.repartition(1)

@@ -60,9 +60,7 @@ mapped_frame = ApplyMapping.apply(
     ],
     transformation_ctx="mapped_frame",
 )
-mapped_frame.printSchema()
 transformed_frame = mapped_frame.map(f=transform)
-transformed_frame.printSchema()
 if transformed_frame.stageErrorsCount() > 0 or mapped_frame.stageErrorsCount() > 0:
     raise Exception("Error in job! See the log!")
 

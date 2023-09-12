@@ -91,7 +91,6 @@ input_frame = glueContext.create_dynamic_frame.from_catalog(
 )
 
 if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
-    input_frame.printSchema()
     transformed_frame = input_frame.map(f=transform_bulk_download)
     mapped_frame = ApplyMapping.apply(
         frame=transformed_frame,
@@ -107,14 +106,12 @@ if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
         ],
         transformation_ctx="mapped_frame",
     )
-    mapped_frame.printSchema()
 
     # Explode method creates separate row for each correction
     exploded_frame = mapped_frame.gs_explode(
         colName="payloads", newCol="payload"
     )
 
-    exploded_frame.printSchema()
 
     final_frame = ApplyMapping.apply(
         frame=exploded_frame,
@@ -132,7 +129,6 @@ if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
         ],
         transformation_ctx="final_frame",
     )
-    final_frame.printSchema()
 
     if final_frame.stageErrorsCount() > 0 or exploded_frame.stageErrorsCount() > 0 or mapped_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
         raise Exception("Error in job! See the log!")
@@ -141,7 +137,6 @@ if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
 
 if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
     transformed_frame = input_frame.map(f=transform_download)
-    transformed_frame.printSchema()
     final_frame = ApplyMapping.apply(
         frame=transformed_frame,
         mappings=[
@@ -158,7 +153,6 @@ if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
         ],
         transformation_ctx="final_frame",
     )
-    final_frame.printSchema()
 
     if final_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
         raise Exception("Error in job! See the log!")
