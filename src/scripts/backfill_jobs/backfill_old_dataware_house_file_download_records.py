@@ -3,13 +3,14 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
+from awsglue.dynamicframe import DynamicFrame
 from awsglue.job import Job
 import gs_explode
 import json
 from backfill_utils import *
 
 args = getResolvedOptions(sys.argv,
-                          ["JOB_NAME", "DESTINATION_DATABASE_NAME", "SOURCE_DATABASE_NAME", "DESTINATION_TABLE_NAME", "SOURCE_TABLE_NAME", "FILE_DOWNLOAD_TYPE", "STACK",
+                          ["JOB_NAME", "DESTINATION_DATABASE_NAME", "SOURCE_DATABASE_NAME","DESTINATION_TABLE_NAME", "SOURCE_BULK_TABLE_NAME", "SOURCE_FILE_TABLE_NAME", "STACK",
                            "RELEASE_NUMBER", "START_DATE", "END_DATE"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -67,7 +68,7 @@ def transform_download(dynamic_record):
 def add_common_fields(json_payload, dynamic_record):
     try:
         dynamic_record["stack"] = args["STACK"]
-        dynamic_record["instance"] = args["RELEASE_NUMBER"].lstrip("0")
+        dynamic_record["instance"] = remove_padded_leading_zeros(args["RELEASE_NUMBER"])
         dynamic_record["timestamp"] = int(dynamic_record["timestamp"])
         dynamic_record["user_id"] = get_key_from_json_payload(json_payload, "userId")
         dynamic_record["downloaded_file_handle_id"] = get_key_from_json_payload(json_payload, "resultZipFileHandleId")
@@ -83,80 +84,91 @@ def add_common_fields(json_payload, dynamic_record):
 
 
 # Script generated for node S3 bucket
-input_frame = glueContext.create_dynamic_frame.from_catalog(
+bulk_file_input_frame = glueContext.create_dynamic_frame.from_catalog(
     database=args["SOURCE_DATABASE_NAME"],
-    table_name=args["SOURCE_TABLE_NAME"],
-    transformation_ctx="input_frame",
+    table_name=args["SOURCE_BULK_TABLE_NAME"],
+    transformation_ctx="bulk_file_input_frame",
     push_down_predicate=predicate
 )
 
-if args["FILE_DOWNLOAD_TYPE"] == "bulkfiledownloadresponse":
-    transformed_frame = input_frame.map(f=transform_bulk_download)
-    mapped_frame = ApplyMapping.apply(
-        frame=transformed_frame,
-        mappings=[
-            ("timestamp", "bigint", "timestamp", "bigint"),
-            ("stack", "string", "stack", "string"),
-            ("instance", "string", "instance", "string"),
-            ("record_date", "date", "record_date", "date"),
-            ("project_id", "bigint", "project_id", "bigint"),
-            ("user_id", "bigint", "user_id", "bigint"),
-            ("downloaded_file_handle_id", "bigint", "downloaded_file_handle_id", "bigint"),
-            ("payloads", "array", "payloads", "array")
-        ],
-        transformation_ctx="mapped_frame",
-    )
-
-    # Explode method creates separate row for each correction
-    exploded_frame = mapped_frame.gs_explode(
-        colName="payloads", newCol="payload"
-    )
+file_input_frame = glueContext.create_dynamic_frame.from_catalog(
+    database=args["SOURCE_DATABASE_NAME"],
+    table_name=args["SOURCE_FILE_TABLE_NAME"],
+    transformation_ctx="file_input_frame",
+    push_down_predicate=predicate
+)
 
 
-    final_frame = ApplyMapping.apply(
-        frame=exploded_frame,
-        mappings=[
-            ("timestamp", "bigint", "timestamp", "timestamp"),
-            ("stack", "string", "stack", "string"),
-            ("instance", "string", "instance", "string"),
-            ("record_date", "date", "record_date", "date"),
-            ("user_id", "string", "user_id", "bigint"),
-            ("project_id", "string", "project_id", "bigint"),
-            ("downloaded_file_handle_id", "string", "downloaded_file_handle_id", "string"),
-            ("payload.file_handle_id", "string", "file_handle_id", "string"),
-            ("payload.association_object_id", "string", "association_object_id", "string"),
-            ("payload.association_object_type", "string", "association_object_type", "string")
-        ],
-        transformation_ctx="final_frame",
-    )
+bulk_transformed_frame = bulk_file_input_frame.map(f=transform_bulk_download)
+bulk_mapped_frame = ApplyMapping.apply(
+    frame=bulk_transformed_frame,
+    mappings=[
+        ("timestamp", "bigint", "timestamp", "bigint"),
+        ("stack", "string", "stack", "string"),
+        ("instance", "string", "instance", "string"),
+        ("record_date", "date", "record_date", "date"),
+        ("project_id", "bigint", "project_id", "bigint"),
+        ("user_id", "bigint", "user_id", "bigint"),
+        ("downloaded_file_handle_id", "bigint", "downloaded_file_handle_id", "bigint"),
+        ("payloads", "array", "payloads", "array")
+    ],
+    transformation_ctx="bulk_mapped_frame",
+)
 
-    if final_frame.stageErrorsCount() > 0 or exploded_frame.stageErrorsCount() > 0 or mapped_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
-        raise Exception("Error in job! See the log!")
+# Explode method creates separate row for each correction
+exploded_frame = bulk_mapped_frame.gs_explode(
+    colName="payloads", newCol="payload"
+)
 
-if args["FILE_DOWNLOAD_TYPE"] == "filedownloadrecord":
-    transformed_frame = input_frame.map(f=transform_download)
-    final_frame = ApplyMapping.apply(
-        frame=transformed_frame,
-        mappings=[
-            ("timestamp", "bigint", "timestamp", "timestamp"),
-            ("stack", "string", "stack", "string"),
-            ("instance", "string", "instance", "string"),
-            ("record_date", "date", "record_date", "date"),
-            ("user_id", "string", "user_id", "bigint"),
-            ("project_id", "string", "project_id", "bigint"),
-            ("downloaded_file_handle_id", "string", "downloaded_file_handle_id", "string"),
-            ("file_handle_id", "string", "file_handle_id", "string"),
-            ("association_object_id", "string", "association_object_id", "string"),
-            ("association_object_type", "string", "association_object_type", "string")
-        ],
-        transformation_ctx="final_frame",
-    )
 
-    if final_frame.stageErrorsCount() > 0 or transformed_frame.stageErrorsCount() > 0:
-        raise Exception("Error in job! See the log!")
+bulk_final_frame = ApplyMapping.apply(
+    frame=exploded_frame,
+    mappings=[
+        ("timestamp", "bigint", "timestamp", "timestamp"),
+        ("stack", "string", "stack", "string"),
+        ("instance", "string", "instance", "string"),
+        ("record_date", "date", "record_date", "date"),
+        ("user_id", "string", "user_id", "bigint"),
+        ("project_id", "string", "project_id", "bigint"),
+        ("downloaded_file_handle_id", "string", "downloaded_file_handle_id", "string"),
+        ("payload.file_handle_id", "string", "file_handle_id", "string"),
+        ("payload.association_object_id", "string", "association_object_id", "string"),
+        ("payload.association_object_type", "string", "association_object_type", "string")
+    ],
+    transformation_ctx="bulk_final_frame",
+)
 
-output_frame = final_frame.resolveChoice(choice='match_catalog', database=args['DESTINATION_DATABASE_NAME'],
-                                         table_name=args['DESTINATION_TABLE_NAME'])
+if bulk_final_frame.stageErrorsCount() > 0 or exploded_frame.stageErrorsCount() > 0 or bulk_mapped_frame.stageErrorsCount() > 0 or bulk_transformed_frame.stageErrorsCount() > 0:
+    raise Exception("Error in job! See the log!")
+
+file_transformed_frame = file_input_frame.map(f=transform_download)
+file_final_frame = ApplyMapping.apply(
+    frame=file_transformed_frame,
+    mappings=[
+        ("timestamp", "bigint", "timestamp", "timestamp"),
+        ("stack", "string", "stack", "string"),
+        ("instance", "string", "instance", "string"),
+        ("record_date", "date", "record_date", "date"),
+        ("user_id", "string", "user_id", "bigint"),
+        ("project_id", "string", "project_id", "bigint"),
+        ("downloaded_file_handle_id", "string", "downloaded_file_handle_id", "string"),
+        ("file_handle_id", "string", "file_handle_id", "string"),
+        ("association_object_id", "string", "association_object_id", "string"),
+        ("association_object_type", "string", "association_object_type", "string")
+    ],
+    transformation_ctx="file_final_frame",
+)
+
+if file_final_frame.stageErrorsCount() > 0 or file_transformed_frame.stageErrorsCount() > 0:
+    raise Exception("Error in job! See the log!")
+
+df1 = bulk_final_frame.toDF()
+df2 = file_final_frame.toDF()
+union = df1.union(df2)
+merged_dynamic_frame = DynamicFrame.fromDF(union, glueContext, "merged_dynamic_frame")
+
+output_frame = merged_dynamic_frame.resolveChoice(choice='match_catalog', database=args['DESTINATION_DATABASE_NAME'],
+                                                  table_name=args['DESTINATION_TABLE_NAME'])
 if output_frame.count() > 0:
     glueContext.write_dynamic_frame.from_catalog(
         frame=output_frame,
