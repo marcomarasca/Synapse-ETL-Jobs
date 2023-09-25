@@ -41,6 +41,8 @@ def main():
     mapped_frame = input_frame.apply_mapping(
         [
             ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+            ("changeType", "string", "change_type", "string"),
+            ("userId", "bigint", "change_user_id", "bigint"),
             ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
             # Note that we map the same timestamp into a bigint so that we can extract the partition date
             ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
