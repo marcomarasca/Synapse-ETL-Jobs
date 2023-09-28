@@ -70,7 +70,7 @@ TBLPROPERTIES (
   'write.compression'='GZIP'
 );
 
-INSERT INTO backfill.transformed_userprofile
+INSERT INTO backfill.transformed_verifications
 SELECT 'prod' as stack,
 	-- Gets rid of the zero padding
 	cast(cast(instance as integer) as varchar) as instance,
