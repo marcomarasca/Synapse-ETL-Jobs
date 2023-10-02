@@ -96,7 +96,7 @@ def transform(dynamic_record):
 
 
 def get_normalized_method_signature(requesturl):
-    url = requesturl.lower()
+    url = decode_url(requesturl.lower())
     prefix_index = url.find('/v1/')
     if prefix_index == -1:
         return "INVALID URL"
@@ -109,8 +109,18 @@ def get_normalized_method_signature(requesturl):
         result = "/evaluation/name/#"
     elif requesturl.startswith("/entity/alias"):
         result = "/entity/alias/#"
+    elif requesturl.startswith("/2fa"):
+        result = requesturl
+    elif requesturl.startswith("/user/bundle"):
+        result = "/user/bundle"
+    elif "/access/" in requesturl:
+        result = "/objects/#/access/#"
+    elif "/schema/type/" in requesturl:
+        result = "/schema/type/#"
     else:
-        result = re.sub("/(syn\\d+|\\d+)", "/#", requesturl)
+        result = re.sub(r'\bsyn\d+(\.\d+)?\b|\b\d+(\.\d+)?\b', '#', requesturl)
+        result = re.sub(r';[^/]+', '', result)
+        result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|]+', '', result)
     return result
 
 

