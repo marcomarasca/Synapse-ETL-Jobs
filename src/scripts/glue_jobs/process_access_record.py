@@ -5,6 +5,8 @@ This script executed by a Glue job. The job take the access record data from S3 
 
 import sys
 import re
+import urllib.parse
+
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -123,6 +125,11 @@ def get_normalized_method_signature(requesturl):
         result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|]+', '', result)
     return result
 
+def decode_url(encoded_url):
+    if encoded_url is None:
+        return None
+    decoded_url = urllib.parse.unquote(encoded_url)
+    return "".join(decoded_url.split())
 
 def get_client(user_agent):
     if user_agent is None:
