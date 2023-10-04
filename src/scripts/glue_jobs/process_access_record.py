@@ -120,9 +120,16 @@ def get_normalized_method_signature(requesturl):
     elif "/schema/type/" in requesturl:
         result = "/schema/type/#"
     else:
-        result = re.sub(r'\bsyn\d+(\.\d+)?\b|\b\d+(\.\d+)?\b', '#', requesturl)
-        result = re.sub(r';[^/]+', '', result)
-        result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|]+', '', result)
+        # find and remove substring in url starting from ';' until '/' if present.
+        result = re.sub(r';[^/]+', '', requesturl)
+        # find and remove special characters in url
+        result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|=]+', '', result)
+        # find and replace substrings with length >=2 in url containing ids with '#'. ID can start with 'syn',
+        # 'fh' or digits.
+        result = re.sub(r'\b(syn|fh)\d+(\.\d+)?\b|\b\d+(\w+)?[^/]\b', '#', result)
+        # The regex provided above doesn't account for substrings with a length of 1.
+        # Find and replace substring in url containing only digits.
+        result = re.sub(r'/\d+', '/#', result)
     return result
 
 def decode_url(encoded_url):

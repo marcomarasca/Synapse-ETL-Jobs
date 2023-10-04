@@ -141,10 +141,52 @@ class TestTransformedAccessRecord(unittest.TestCase):
         real_output = process_access_record.get_normalized_method_signature("/ga4gh/drs/v1/objects/syn35423183.1")
         self.assertEqual(expected_output, real_output)
 
+    def test_normalized_signature_for_drs_object_for_fileHandleId(self):
+        expected_output = "/objects/#"
+        real_output = process_access_record.get_normalized_method_signature("/ga4gh/drs/v1/objects/fh123")
+        self.assertEqual(expected_output, real_output)
+
     def test_normalized_signature_for_schema_type(self):
         expected_output = "/schema/type/#"
         real_output = process_access_record.get_normalized_method_signature(
             "/repo/v1/schema/type/registered/a245ac37480fc40739836ce61801d19f1-my.schema-0.36652.1")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_evaluation_submission_with_string_id(self):
+        expected_output = "/evaluation/submission/#/status"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/evaluation/submission/9720221_curl_168/status")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_evaluation_submission_with_file_handle_id(self):
+        expected_output = "/evaluation/submission/#/file/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/evaluation/submission/9720221_curl_168/file/123")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_data_access_submission_id_with_vr(self):
+        expected_output = "/dataaccesssubmission/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/dataAccessSubmission/7416vr")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_entity_with_version_in_end(self):
+        expected_output = "/entity/#/version/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn9692796/version/98")
+        self.assertEqual(expected_output, real_output)
+
+    def test_normalized_signature_for_entity_with_vesion_in_middle(self):
+        expected_output = "/entity/#/version/#/json"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/entity/syn25830585/version/1/json")
+        self.assertEqual(expected_output, real_output)
+
+
+    def test_normalized_signature_for_team_member_with_query_parameters(self):
+        expected_output = "/teammembers/#"
+        real_output = process_access_record.get_normalized_method_signature(
+            "/repo/v1/teamMembers/3431460&limit=50&offset=0")
         self.assertEqual(expected_output, real_output)
 
     def test_normalized_signature_for_team_with_singleQuotes(self):
