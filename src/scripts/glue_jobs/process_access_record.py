@@ -117,13 +117,13 @@ def get_normalized_method_signature(requesturl):
         result = "/user/bundle"
     elif "/access/" in requesturl:
         result = "/objects/#/access/#"
-    elif "/schema/type/" in requesturl:
-        result = "/schema/type/#"
+    elif "/schema/type/registered/" in requesturl:
+        result = "/schema/type/registered/#"
     else:
         # find and remove substring in url starting from ';' until '/' if present.
         result = re.sub(r';[^/]+', '', requesturl)
-        # find and remove special characters in url
-        result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|=]+', '', result)
+        # find and remove any character that is not a word character (letters, digits, or underscores) or slash.
+        result = re.sub(r'[^\w\/]', '', result)
         # find and replace substrings with length >=2 in url containing ids with '#'. ID can start with 'syn',
         # 'fh' or digits.
         result = re.sub(r'\b(syn|fh)\d+(\.\d+)?\b|\b\d+(\w+)?[^/]\b', '#', result)
