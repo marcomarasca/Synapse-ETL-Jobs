@@ -5,6 +5,8 @@ This script executed by a Glue job. The job take the access record data from S3 
 
 import sys
 import re
+import urllib.parse
+
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -96,7 +98,7 @@ def transform(dynamic_record):
 
 
 def get_normalized_method_signature(requesturl):
-    url = requesturl.lower()
+    url = decode_url(requesturl.lower())
     prefix_index = url.find('/v1/')
     if prefix_index == -1:
         return "INVALID URL"
@@ -109,10 +111,32 @@ def get_normalized_method_signature(requesturl):
         result = "/evaluation/name/#"
     elif requesturl.startswith("/entity/alias"):
         result = "/entity/alias/#"
+    elif requesturl.startswith("/2fa"):
+        result = requesturl
+    elif requesturl.startswith("/user/bundle"):
+        result = "/user/bundle"
+    elif "/access/" in requesturl:
+        result = "/objects/#/access/#"
+    elif "/schema/type/" in requesturl:
+        result = "/schema/type/#"
     else:
-        result = re.sub("/(syn\\d+|\\d+)", "/#", requesturl)
+        # find and remove substring in url starting from ';' until '/' if present.
+        result = re.sub(r';[^/]+', '', requesturl)
+        # find and remove special characters in url
+        result = re.sub(r'[\'!@$%^&*()_+{}\[\]:;<>,.?~\\|=]+', '', result)
+        # find and replace substrings with length >=2 in url containing ids with '#'. ID can start with 'syn',
+        # 'fh' or digits.
+        result = re.sub(r'\b(syn|fh)\d+(\.\d+)?\b|\b\d+(\w+)?[^/]\b', '#', result)
+        # The regex provided above doesn't account for substrings with a length of 1.
+        # Find and replace substring in url containing only digits.
+        result = re.sub(r'/\d+', '/#', result)
     return result
 
+def decode_url(encoded_url):
+    if encoded_url is None:
+        return None
+    decoded_url = urllib.parse.unquote(encoded_url)
+    return "".join(decoded_url.split())
 
 def get_client(user_agent):
     if user_agent is None:
