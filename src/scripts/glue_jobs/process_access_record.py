@@ -134,17 +134,24 @@ def get_normalized_method_signature(requesturl):
         result = re.sub(r'/\d+', '/#', result)
     return result
 
+
 def decode_url(encoded_url):
     if encoded_url is None:
         return None
     decoded_url = urllib.parse.unquote(encoded_url)
     return "".join(decoded_url.split())
 
+
+'''
+The order of web and java client matters since some web client call go through Java client, therefore, the USER_AGENT
+contains both keys for WEB and JAVA client. The order of python and command line client also matters since command line 
+client's USER_AGENT contains python client's key.
+'''
+
+
 def get_client(user_agent):
     if user_agent is None:
         result = "UNKNOWN"
-# The order of web and java client matters since some web client call go through Java client, therefore, the USER_AGENT
-    # contains both keys for WEB and JAVA client.
     elif user_agent.find(WEB_CLIENT) >= 0:
         result = "WEB"
     elif re.search(WEB_BROWSER_CLIENT, user_agent):
@@ -157,7 +164,6 @@ def get_client(user_agent):
         result = "SYNAPSER"
     elif user_agent.find(R_CLIENT) >= 0:
         result = "R"
-# The order of python and command line client matters since command line client's USER_AGENT contains python client's key.
     elif user_agent.find(COMMAND_LINE_CLIENT) >= 0:
         result = "COMMAND_LINE"
     elif user_agent.find(PYTHON_CLIENT) >= 0:
@@ -171,14 +177,18 @@ def get_client(user_agent):
     return result
 
 
+''' 
+In case of WEB_BROWSER_CLIENT_PATTERN re.match find the pattern in the beginning of the string, web browser 
+user agent has mozilla, chrome and safari in same string, so take the first matching pattern.
+Regex has 2 groups first is browser type (mozilla, chrome, safari etc.) and 2nd is version.
+'''
+
+
 def get_client_version(client, user_agent):
     if user_agent is None:
         return None
     elif client == "WEB":
         if re.search(WEB_BROWSER_CLIENT, user_agent):
-            # re.match find the pattern in the beginning of the string, in case of web browser user agent
-            # we receive mozilla, chrome and safari in same string, so we take first matching pattern.
-            # regex has 2 groups first is browser and 2nd is version, and we need to return group(2)
             matcher = re.match(WEB_BROWSER_CLIENT_PATTERN, user_agent)
             if matcher is None or matcher.group(2) is None:
                 return None
@@ -239,7 +249,8 @@ def main():
     mapped_frame = apply_mapping(dynamic_frame)
     transformed_frame = mapped_frame.map(f=transform)
     # Use the catalog table to resolve any ambiguity
-    type_casted_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
+    type_casted_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
+                                                        table_name=args['TABLE_NAME'])
 
     #  Write the processed access records to destination
     glue_context.write_dynamic_frame.from_catalog(
