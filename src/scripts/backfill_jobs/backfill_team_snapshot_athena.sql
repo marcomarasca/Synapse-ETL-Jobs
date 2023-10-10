@@ -11,12 +11,11 @@ TBLPROPERTIES (
     "storage.location.template"="s3://prod.snapshot.record.sagebase.org/${instance}/team/${snapshot_date}/",
     "projection.enabled"="true",
     "projection.instance.type"="integer",
-    "projection.instance.range"="000000386,000000472",
+    "projection.instance.range"="000000386,000000471",
     "projection.instance.digits"="9",
     "projection.snapshot_date.type"="date",
     "projection.snapshot_date.format"="yyyy-MM-dd",
-    -- Backfill from Jan 2022 up until the 10th of October 2023 which is the first day of the stack 472. Because we had
-    -- changes in 472, so need to backfill until first day of release 472
+    -- Backfill from Jan 2022 up until the 10th of October 2023 which is the last day of the stack 471.
     "projection.snapshot_date.range"="2022-01-01,2023-10-10"
 );
 
@@ -111,5 +110,5 @@ FROM backfill.old_team_snapshot where instance IN
 ('000000436', '000000437', '000000438', '000000439', '000000440', '000000441', '000000442', '000000443', '000000444', '000000445');
 ('000000446', '000000447', '000000448', '000000449', '000000450', '000000451', '000000452', '000000453', '000000454', '000000455');
 ('000000456', '000000457', '000000458', '000000459', '000000460', '000000461', '000000462', '000000463', '000000464', '000000465');
-('000000466', '000000467', '000000468', '000000469', '000000470', '000000471', '000000472');
+('000000466', '000000467', '000000468', '000000469', '000000470', '000000471');
 
