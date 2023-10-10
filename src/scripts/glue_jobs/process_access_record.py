@@ -24,6 +24,7 @@ JAVA_CLIENT = "Synapse-Java-Client"
 COMMAND_LINE_CLIENT = "synapsecommandlineclient"
 ELB_CLIENT = "ELB-HealthChecker"
 STACK_CLIENT = "SynapseRepositoryStack"
+WEB_BROWSER_CLIENT = "(?i)(mozilla|safari|opera|lynx|ucweb|chrome|firefox)"
 
 CLIENT_REGEX = "/(\\S+)"
 SYNAPSER_CLIENT_PATTERN = SYNAPSER_CLIENT + CLIENT_REGEX
@@ -35,6 +36,7 @@ JAVA_CLIENT_PATTERN = JAVA_CLIENT + CLIENT_REGEX
 COMMAND_LINE_CLIENT_PATTERN = COMMAND_LINE_CLIENT + CLIENT_REGEX
 ELB_CLIENT_PATTERN = ELB_CLIENT + CLIENT_REGEX
 STACK_CLIENT_PATTERN = STACK_CLIENT + CLIENT_REGEX
+WEB_BROWSER_CLIENT_PATTERN = WEB_BROWSER_CLIENT + CLIENT_REGEX
 
 
 # Get access record from source and create dynamic frame for futher processing
@@ -141,7 +143,11 @@ def decode_url(encoded_url):
 def get_client(user_agent):
     if user_agent is None:
         result = "UNKNOWN"
+# The order of web and java client matters since some web client call go through Java client, therefore, the USER_AGENT
+    # contains both keys for WEB and JAVA client.
     elif user_agent.find(WEB_CLIENT) >= 0:
+        result = "WEB"
+    elif re.search(WEB_BROWSER_CLIENT, user_agent):
         result = "WEB"
     elif user_agent.find(JAVA_CLIENT) >= 0:
         result = "JAVA"
@@ -151,6 +157,7 @@ def get_client(user_agent):
         result = "SYNAPSER"
     elif user_agent.find(R_CLIENT) >= 0:
         result = "R"
+# The order of python and command line client matters since command line client's USER_AGENT contains python client's key.
     elif user_agent.find(COMMAND_LINE_CLIENT) >= 0:
         result = "COMMAND_LINE"
     elif user_agent.find(PYTHON_CLIENT) >= 0:
@@ -168,24 +175,34 @@ def get_client_version(client, user_agent):
     if user_agent is None:
         return None
     elif client == "WEB":
-        matcher = re.match(WEB_CLIENT_PATTERN, user_agent)
+        if re.search(WEB_BROWSER_CLIENT, user_agent):
+            # re.match find the pattern in the beginning of the string, in case of web browser user agent
+            # we receive mozilla, chrome and safari in same string, so we take first matching pattern.
+            # regex has 2 groups first is browser and 2nd is version, and we need to return group(2)
+            matcher = re.match(WEB_BROWSER_CLIENT_PATTERN, user_agent)
+            if matcher is None or matcher.group(2) is None:
+                return None
+            else:
+                return matcher.group(2)
+        else:
+            matcher = re.search(WEB_CLIENT_PATTERN, user_agent)
     elif client == "JAVA":
         if user_agent.startswith("Synpase"):
-            matcher = re.match(OLD_JAVA_CLIENT_PATTERN, user_agent)
+            matcher = re.search(OLD_JAVA_CLIENT_PATTERN, user_agent)
         else:
-            matcher = re.match(JAVA_CLIENT_PATTERN, user_agent)
+            matcher = re.search(JAVA_CLIENT_PATTERN, user_agent)
     elif client == "SYNAPSER":
-        matcher = re.match(SYNAPSER_CLIENT_PATTERN, user_agent)
+        matcher = re.search(SYNAPSER_CLIENT_PATTERN, user_agent)
     elif client == "R":
-        matcher = re.match(R_CLIENT_PATTERN, user_agent)
+        matcher = re.search(R_CLIENT_PATTERN, user_agent)
     elif client == "PYTHON":
-        matcher = re.match(PYTHON_CLIENT_PATTERN, user_agent)
+        matcher = re.search(PYTHON_CLIENT_PATTERN, user_agent)
     elif client == "ELB_HEALTHCHECKER":
-        matcher = re.match(ELB_CLIENT_PATTERN, user_agent)
+        matcher = re.search(ELB_CLIENT_PATTERN, user_agent)
     elif client == "COMMAND_LINE":
-        matcher = re.match(COMMAND_LINE_CLIENT_PATTERN, user_agent)
+        matcher = re.search(COMMAND_LINE_CLIENT_PATTERN, user_agent)
     elif client == "STACK":
-        matcher = re.match(STACK_CLIENT_PATTERN, user_agent)
+        matcher = re.search(STACK_CLIENT_PATTERN, user_agent)
     else:
         return None
     if matcher is None:
