@@ -53,7 +53,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://prod.log.sagebase.org/teamSnapshots/records_backfill'
+  's3://prod.log.sagebase.org/backfill/teamSnapshots/'
 TBLPROPERTIES (
   'write.compression'='GZIP'
 );

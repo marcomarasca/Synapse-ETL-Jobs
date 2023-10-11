@@ -47,13 +47,13 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://prod.log.sagebase.org/userGroupSnapshots/records_backfill'
+  's3://prod.log.sagebase.org/backfill/userGroupSnapshots/'
 TBLPROPERTIES ( 
   'write.compression'='GZIP'
 );
 
 -- This is the backfill query, notice that an insert is limited to 100 partitions so we cannot run this on the entire dataset but we can filter by instance (e.g. 5 instances at the time)
-INSERT INTO backfill.transformed_acl_snapshots
+INSERT INTO backfill.transformed_usergroup
 SELECT 
 'prod' as stack,
 -- Gets rid of the zero padding
@@ -84,7 +84,7 @@ cast(year(date(snapshot_date)) as varchar) as year,
 -- Zero pads month and day
 lpad(cast(month(date(snapshot_date)) as varchar), 2, '0') as month,
 lpad(cast(day(date(snapshot_date)) as varchar), 2, '0') as day
-FROM old_acl_snapshots where instance IN 
+FROM old_usergroup where instance IN 
 ('000000386', '000000387', '000000388', '000000389', '000000390', '000000391', '000000392', '000000393', '000000394', '000000395');
 ('000000396', '000000397', '000000398', '000000399', '000000400', '000000401', '000000402', '000000403', '000000404', '000000405');
 ('000000406', '000000407', '000000408', '000000409', '000000410', '000000411', '000000412', '000000413', '000000414', '000000415');

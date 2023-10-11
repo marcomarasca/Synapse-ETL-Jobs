@@ -58,7 +58,7 @@ OUTPUTFORMAT
 LOCATION
 -- Temporary location for the backfilled data, we can then copy the backfilled records to the real destination
 -- s3://prod.log.sagebase.org/aclSnapshots/records
-  's3://prod.log.sagebase.org/aclSnapshots/records_backfill'
+  's3://prod.log.sagebase.org/backfill/aclSnapshots/'
 TBLPROPERTIES ( 
   'write.compression'='GZIP'
 );
