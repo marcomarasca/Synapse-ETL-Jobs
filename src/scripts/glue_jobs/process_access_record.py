@@ -24,6 +24,7 @@ JAVA_CLIENT = "Synapse-Java-Client"
 COMMAND_LINE_CLIENT = "synapsecommandlineclient"
 ELB_CLIENT = "ELB-HealthChecker"
 STACK_CLIENT = "SynapseRepositoryStack"
+WEB_BROWSER_CLIENT = "(?i)(mozilla|safari|opera|lynx|ucweb|chrome|firefox)"
 
 CLIENT_REGEX = "/(\\S+)"
 SYNAPSER_CLIENT_PATTERN = SYNAPSER_CLIENT + CLIENT_REGEX
@@ -35,6 +36,7 @@ JAVA_CLIENT_PATTERN = JAVA_CLIENT + CLIENT_REGEX
 COMMAND_LINE_CLIENT_PATTERN = COMMAND_LINE_CLIENT + CLIENT_REGEX
 ELB_CLIENT_PATTERN = ELB_CLIENT + CLIENT_REGEX
 STACK_CLIENT_PATTERN = STACK_CLIENT + CLIENT_REGEX
+WEB_BROWSER_CLIENT_PATTERN = WEB_BROWSER_CLIENT + CLIENT_REGEX
 
 
 # Get access record from source and create dynamic frame for futher processing
@@ -132,16 +134,27 @@ def get_normalized_method_signature(requesturl):
         result = re.sub(r'/\d+', '/#', result)
     return result
 
+
 def decode_url(encoded_url):
     if encoded_url is None:
         return None
     decoded_url = urllib.parse.unquote(encoded_url)
     return "".join(decoded_url.split())
 
+
+'''
+The order of web and java client matters since some web client call go through Java client, therefore, the USER_AGENT
+contains both keys for WEB and JAVA client. The order of python and command line client also matters since command line 
+client's USER_AGENT contains python client's key.
+'''
+
+
 def get_client(user_agent):
     if user_agent is None:
         result = "UNKNOWN"
     elif user_agent.find(WEB_CLIENT) >= 0:
+        result = "WEB"
+    elif re.search(WEB_BROWSER_CLIENT, user_agent):
         result = "WEB"
     elif user_agent.find(JAVA_CLIENT) >= 0:
         result = "JAVA"
@@ -164,28 +177,42 @@ def get_client(user_agent):
     return result
 
 
+''' 
+In case of WEB_BROWSER_CLIENT_PATTERN re.match find the pattern in the beginning of the string, web browser 
+user agent has mozilla, chrome and safari in same string, so take the first matching pattern.
+Regex has 2 groups first is browser type (mozilla, chrome, safari etc.) and 2nd is version.
+'''
+
+
 def get_client_version(client, user_agent):
     if user_agent is None:
         return None
     elif client == "WEB":
-        matcher = re.match(WEB_CLIENT_PATTERN, user_agent)
+        if re.search(WEB_BROWSER_CLIENT, user_agent):
+            matcher = re.match(WEB_BROWSER_CLIENT_PATTERN, user_agent)
+            if matcher is None or matcher.group(2) is None:
+                return None
+            else:
+                return matcher.group(2)
+        else:
+            matcher = re.search(WEB_CLIENT_PATTERN, user_agent)
     elif client == "JAVA":
         if user_agent.startswith("Synpase"):
-            matcher = re.match(OLD_JAVA_CLIENT_PATTERN, user_agent)
+            matcher = re.search(OLD_JAVA_CLIENT_PATTERN, user_agent)
         else:
-            matcher = re.match(JAVA_CLIENT_PATTERN, user_agent)
+            matcher = re.search(JAVA_CLIENT_PATTERN, user_agent)
     elif client == "SYNAPSER":
-        matcher = re.match(SYNAPSER_CLIENT_PATTERN, user_agent)
+        matcher = re.search(SYNAPSER_CLIENT_PATTERN, user_agent)
     elif client == "R":
-        matcher = re.match(R_CLIENT_PATTERN, user_agent)
+        matcher = re.search(R_CLIENT_PATTERN, user_agent)
     elif client == "PYTHON":
-        matcher = re.match(PYTHON_CLIENT_PATTERN, user_agent)
+        matcher = re.search(PYTHON_CLIENT_PATTERN, user_agent)
     elif client == "ELB_HEALTHCHECKER":
-        matcher = re.match(ELB_CLIENT_PATTERN, user_agent)
+        matcher = re.search(ELB_CLIENT_PATTERN, user_agent)
     elif client == "COMMAND_LINE":
-        matcher = re.match(COMMAND_LINE_CLIENT_PATTERN, user_agent)
+        matcher = re.search(COMMAND_LINE_CLIENT_PATTERN, user_agent)
     elif client == "STACK":
-        matcher = re.match(STACK_CLIENT_PATTERN, user_agent)
+        matcher = re.search(STACK_CLIENT_PATTERN, user_agent)
     else:
         return None
     if matcher is None:
@@ -222,7 +249,8 @@ def main():
     mapped_frame = apply_mapping(dynamic_frame)
     transformed_frame = mapped_frame.map(f=transform)
     # Use the catalog table to resolve any ambiguity
-    type_casted_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
+    type_casted_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
+                                                        table_name=args['TABLE_NAME'])
 
     #  Write the processed access records to destination
     glue_context.write_dynamic_frame.from_catalog(
