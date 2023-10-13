@@ -53,7 +53,6 @@ def main():
             ("snapshot.versionNumber", "bigint", "version_number", "bigint"),
             ("snapshot.name", "string", "name", "string"),
             ("snapshot.description", "string", "description", "string"),
-            ("snapshot.etag", "string", "etag", "string"),
             ("snapshot.createdBy", "string", "created_by", "bigint"),
             ("snapshot.modifiedBy", "string", "modified_by", "bigint"),
             ("snapshot.createdOn", "bigint", "created_on", "timestamp"),
