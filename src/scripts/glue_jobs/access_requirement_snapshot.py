@@ -77,8 +77,8 @@ def main():
             ("snapshot.termsOfUse", "string", "terms_of_use", "string"),
 
             # Next two properties only for ACTAccessRequirement
-            ("snapshot.actContactInfo", "string", "terms_of_use", "string"),
-            ("snapshot.openJiraIssue", "boolean", "is_two_fa_required", "boolean"),
+            ("snapshot.actContactInfo", "string", "act_contact_info", "string"),
+            ("snapshot.openJiraIssue", "boolean", "open_jira_issue", "boolean"),
 
             # Next property only for LockAccessRequirement
             ("snapshot.jiraKey", "string", "jira_key", "string"),
