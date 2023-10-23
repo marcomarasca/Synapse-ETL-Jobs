@@ -14,7 +14,7 @@ from utils import ms_to_partition_date
 # process the record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
+    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
     return dynamic_record
 
 def main():
@@ -39,14 +39,17 @@ def main():
     # Maps the incoming record to flatten table
     mapped_frame = input_frame.apply_mapping(
         [
-            # we need to map the same timestamp into a bigint so that we can extract the partition date
-            ("timestamp", "bigint", "record_date", "bigint"),
+            ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+            ("changeType", "string", "change_type", "string"),
+            ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
+            # Note that we map the same timestamp into a bigint so that we can extract the partition date
+            ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
             ("stack", "string", "stack", "string"),
             ("instance", "string", "instance", "string"),
-            ("payload.userId", "string", "user_id", "bigint"),
-            ("payload.responseId", "bigint", "response_id", "bigint"),
-            ("payload.passed", "boolean", "passed", "boolean"),
-            ("payload.passedOn", "bigint", "passed_on", "timestamp")
+            ("snapshot.userId", "string", "user_id", "bigint"),
+            ("snapshot.responseId", "bigint", "response_id", "bigint"),
+            ("snapshot.passed", "boolean", "passed", "boolean"),
+            ("snapshot.passedOn", "bigint", "passed_on", "timestamp")
         ]
     )
 
@@ -62,7 +65,7 @@ def main():
             frame=output_frame,
             database=args["DATABASE_NAME"],
             table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": ["record_date"]}
+            additional_options={"partitionKeys": ["snapshot_date"]}
         )
 
     job.commit()
