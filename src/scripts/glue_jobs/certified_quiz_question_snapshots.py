@@ -15,7 +15,7 @@ import gs_explode
 # process the record
 def transform(dynamic_record):
     # Correction array contains questionIndex and isCorrect, which is need for quiz question record
-    corrections = dynamic_record["payload"]["corrections"]
+    corrections = dynamic_record["snapshot"]["corrections"]
     correctionInfo = []
     for correction in corrections:
         info = {
@@ -26,7 +26,7 @@ def transform(dynamic_record):
 
     dynamic_record["corrections"] = correctionInfo
     # This is the partition date
-    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["timestamp"])
+    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["changeTimestamp"])
     return dynamic_record
 
 
@@ -53,31 +53,24 @@ def main():
     # Apply transformations to compute the partition date and array of questionIndex and isCorrect values
     transformed_frame = input_frame.map(f=transform)
 
-    # Drop the unnecessary fields and map new array generated in transformed method
-    mapped_frame = transformed_frame.apply_mapping(
-        [
-            ("stack", "string", "stack", "string"),
-            ("record_date", "date", "record_date", "date"),
-            ("instance", "string", "instance", "string"),
-            ("payload.responseId", "bigint", "response_id", "bigint"),
-            ("corrections", "array", "corrections", "array"),
-        ]
-    )
-
     # Explode method creates separate row for each correction
-    exploded_frame = mapped_frame.gs_explode(
+    exploded_frame = transformed_frame.gs_explode(
         colName="corrections", newCol="correction"
     )
 
     # Map each rows into required table record
     output_frame = exploded_frame.apply_mapping(
         [
+            ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+            ("changeType", "string", "change_type", "string"),
+            ("snapshot.userId", "string", "change_user_id", "bigint"),
+            ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
             ("stack", "string", "stack", "string"),
             ("instance", "string", "instance", "string"),
-            ("response_id", "int", "response_id", "bigint"),
+            ("snapshot.responseId", "int", "response_id", "bigint"),
             ("correction.questionIndex", "int", "question_index", "bigint"),
             ("correction.isCorrect", "boolean", "is_correct", "boolean"),
-            ("record_date", "string", "record_date", "date"),
+            ("snapshot_date", "string", "snapshot_date", "date"),
         ]
     )
 
@@ -91,7 +84,7 @@ def main():
             frame=resolved_frame,
             database=args["DATABASE_NAME"],
             table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": ["record_date"]}
+            additional_options={"partitionKeys": ["snapshot_date"]}
         )
 
     job.commit()
