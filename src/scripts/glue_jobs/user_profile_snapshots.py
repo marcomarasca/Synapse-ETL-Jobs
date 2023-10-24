@@ -61,6 +61,7 @@ def main():
             ("snapshot.location", "string", "location", "string"),
             ("snapshot.company", "string", "company", "string"),
             ("snapshot.position", "string", "position", "string"),
+            ("snapshot.createdOn", "bigint", "created_on", "timestamp")
         ]
     )
 
