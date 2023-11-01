@@ -16,8 +16,12 @@ from utils import syn_id_string_to_int
 def transform(dynamic_record):
     # This is the partition date
     dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
-    # The records might come in with the syn prefix, we need to remove that
-    dynamic_record["duc_template_file_handle_id"] = syn_id_string_to_int(dynamic_record["duc_template_file_handle_id"])
+    
+    # The "duc_template_file_handle_id" is not present in every type of AR
+    if "duc_template_file_handle_id" in dynamic_record:
+        # The records might come in with the syn prefix, we need to remove that
+        dynamic_record["duc_template_file_handle_id"] = syn_id_string_to_int(dynamic_record["duc_template_file_handle_id"])
+    
     return dynamic_record
 
 def main():
