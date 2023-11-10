@@ -53,7 +53,7 @@ def main():
             # Note that we map the same timestamp into a bigint so that we can extract the partition date
             ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
             ("snapshot.concreteType", "string", "concrete_type", "string"),
-            ("snapshot.id", "bigint", "id", "bigint"),
+            ("snapshot.id", "string", "id", "bigint"),
             ("snapshot.projectId", "string", "project_id", "string"),
             ("snapshot.settingsType", "string", "settings_type", "string"),
             ("snapshot.etag", "string", "etag", "string"),
