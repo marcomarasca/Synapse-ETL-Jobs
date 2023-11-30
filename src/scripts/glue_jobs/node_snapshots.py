@@ -71,6 +71,7 @@ def main():
             ("snapshot.isPublic",               "boolean",  "is_public",            "boolean"),
             ("snapshot.isControlled",           "boolean",  "is_controlled",        "boolean"),
             ("snapshot.isRestricted",           "boolean",  "is_restricted",        "boolean"),
+            ("snapshot.effectiveArs",           "array",    "effective_ars",        "array")
         ]
     )
 
