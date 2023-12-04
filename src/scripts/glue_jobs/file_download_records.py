@@ -64,6 +64,7 @@ def main():
             ("payload.downloadedFileHandleId", "string", "downloaded_file_handle_id", "bigint"),
             ("payload.associateType", "string", "association_object_type", "string"),
             ("payload.associateId", "string", "association_object_id", "string"),
+            ("payload.sessionId", "string", "session_id", "string"),
             ("stack", "string", "stack", "string"),
             ("instance", "string", "instance", "string")
         ]
