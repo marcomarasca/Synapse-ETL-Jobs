@@ -10,8 +10,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import ms_to_partition_date
-from utils import syn_id_string_to_int
+from utils import Utils
 
 DOWNLOADED_FILE_HANDLE_ID = "downloaded_file_handle_id"
 FILE_HANDLE_ID = "file_handle_id"
@@ -22,9 +21,9 @@ ASSOCIATED_OBJECT_ID = "association_object_id"
 # process the file download record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record[RECORD_DATE] = ms_to_partition_date(dynamic_record[RECORD_DATE])
+    dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
     # The records come in with the syn prefix, we need to remove that
-    dynamic_record[ASSOCIATED_OBJECT_ID] = syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
+    dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
     # If downloaded file handle id is not present in the record, or it's null then file handle id should be assigned to it.
     if DOWNLOADED_FILE_HANDLE_ID not in dynamic_record.keys() or dynamic_record[DOWNLOADED_FILE_HANDLE_ID] is None:
         dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[FILE_HANDLE_ID]

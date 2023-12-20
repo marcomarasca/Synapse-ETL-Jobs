@@ -10,8 +10,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-from utils import ms_to_partition_date
-from utils import syn_id_string_to_int
+from utils import Utils
 
 RECORD_DATE = "record_date"
 ASSOCIATED_OBJECT_ID = "association_object_id"
@@ -20,10 +19,10 @@ ASSOCIATED_OBJECT_ID = "association_object_id"
 # process the file upload record
 def transform(dynamic_record):
     # This is the partition date
-    dynamic_record[RECORD_DATE] = ms_to_partition_date(dynamic_record[RECORD_DATE])
+    dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
 
     # The records come in with the syn prefix, we need to remove that
-    dynamic_record[ASSOCIATED_OBJECT_ID] = syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
+    dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
 
     return dynamic_record
 

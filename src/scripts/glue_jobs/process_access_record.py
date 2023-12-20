@@ -94,8 +94,8 @@ def transform(dynamic_record):
     dynamic_record["client_version"] = get_client_version(dynamic_record["client"], dynamic_record["user_agent"])
     dynamic_record["entity_id"] = get_entity_id(dynamic_record["request_url"])
     # This is the partition date
-    dynamic_record["record_date"] = ms_to_partition_date(dynamic_record["record_date"])
-    dynamic_record["instance"] = remove_padded_leading_zeros(dynamic_record["instance"])
+    dynamic_record["record_date"] = Utils.ms_to_partition_date(dynamic_record["record_date"])
+    dynamic_record["instance"] = Utils.remove_padded_leading_zeros(dynamic_record["instance"])
     return dynamic_record
 
 
