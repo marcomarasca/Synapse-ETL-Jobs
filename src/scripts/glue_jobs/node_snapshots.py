@@ -1,96 +1,65 @@
 """
-The job take the node snapshot data from S3 and process it.
-Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d pattern) of the change timestamp.
+The job process the node snapshot data.
 """
 
-import sys
 from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from glue_job import GlueJob
+from utils import Utils
 
-from utils import syn_id_string_to_int
-from utils import ms_to_partition_date
+PARTITION_KEY = "snapshot_date"
+ID = "id"
+BENEFACTOR_ID = "benefactor_id"
+PROJECT_ID = "project_id"
+PARENT_ID = "parent_id"
+FILE_HANDLE_ID = "file_handle_id"
 
-# process the access record
-def transform(dynamic_record):
-    # This is the partition date
-    dynamic_record["snapshot_date"] = ms_to_partition_date(dynamic_record["snapshot_date"])
-    
-    # The records come in with the syn prefix, we need to remove that
-    dynamic_record["id"] = syn_id_string_to_int(dynamic_record["id"])
-    dynamic_record["benefactor_id"] = syn_id_string_to_int(dynamic_record["benefactor_id"])
-    dynamic_record["project_id"] = syn_id_string_to_int(dynamic_record["project_id"])
-    dynamic_record["parent_id"] = syn_id_string_to_int(dynamic_record["parent_id"])
-    dynamic_record["file_handle_id"] = syn_id_string_to_int(dynamic_record["file_handle_id"])
-    
-    return dynamic_record
 
-def main():
-    args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
-    sc = SparkContext()
-    glue_context = GlueContext(sc)
-    
-    job = Job(glue_context)
-    job.init(args["JOB_NAME"], args)
+class NodeSnapshots(GlueJob):
 
-    input_frame = glue_context.create_dynamic_frame.from_options(
-        format_options={"multiline": True},
-        connection_type="s3",
-        format="json",
-        connection_options={
-            "paths": [args["S3_SOURCE_PATH"]],
-            "recurse": True
-        },
-        # Note: even though this is optional, job bookmark does not work without it
-        transformation_ctx="input_frame"
-    )
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
-    # Maps the incoming record to a flatten table
-    mapped_frame = input_frame.apply_mapping(
-        [
-            ("changeType",                      "string",   "change_type",          "string"),
-            ("changeTimestamp",                 "bigint",   "change_timestamp",     "timestamp"),
-            ("userId",                          "bigint",   "change_user_id",       "bigint"),
-            ("snapshotTimestamp",               "bigint",   "snapshot_timestamp",   "timestamp"),
-            # Note that we map the same timestamp into a bigint so that we can extract the partition date
-            ("snapshotTimestamp",               "bigint",   "snapshot_date",        "bigint"),
-            ("snapshot.id",                     "string",   "id",                   "string"),
-            ("snapshot.benefactorId",           "string",   "benefactor_id",        "string"),
-            ("snapshot.projectId",              "string",   "project_id",           "string"),
-            ("snapshot.parentId",               "string",   "parent_id",            "string"),
-            ("snapshot.nodeType",               "string",   "node_type",            "string"),
-            ("snapshot.createdOn",              "bigint",   "created_on",           "timestamp"),
-            ("snapshot.createdByPrincipalId",   "bigint",   "created_by",           "bigint"),
-            ("snapshot.modifiedOn",             "bigint",   "modified_on",          "timestamp"),
-            ("snapshot.modifiedByPrincipalId",  "bigint",   "modified_by",          "bigint"),
-            ("snapshot.versionNumber",          "bigint",   "version_number",       "bigint"),
-            ("snapshot.fileHandleId",           "string",   "file_handle_id",       "string"),
-            ("snapshot.name",                   "string",   "name",                 "string"),
-            ("snapshot.isPublic",               "boolean",  "is_public",            "boolean"),
-            ("snapshot.isControlled",           "boolean",  "is_controlled",        "boolean"),
-            ("snapshot.isRestricted",           "boolean",  "is_restricted",        "boolean"),
-            ("snapshot.effectiveArs",           "array",    "effective_ars",        "array")
-        ]
-    )
+    def execute(self, dynamic_frame):
+        return dynamic_frame.map(f=NodeSnapshots.transform)
 
-    # Apply transformations (compute the partition and get rid of syn prefix)
-    transformed_frame = mapped_frame.map(f=transform)
-    
-     # Use the catalog table to resolve any ambiguity
-    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'], table_name=args['TABLE_NAME'])
+    # Process the node snapshot record
+    @staticmethod
+    def transform(dynamic_record):
+        # This is the partition date
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
 
-    # Write only if there is new data (this will error out otherwise)
-    if (output_frame.count() > 0):
-        glue_context.write_dynamic_frame.from_catalog(
-            frame=output_frame,
-            database=args["DATABASE_NAME"],
-            table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": ["snapshot_date"]}
-        )
+        # The records come in with the syn prefix, we need to remove that
+        dynamic_record[ID] = Utils.syn_id_string_to_int(dynamic_record[ID])
+        dynamic_record[BENEFACTOR_ID] = Utils.syn_id_string_to_int(dynamic_record[BENEFACTOR_ID])
+        dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
+        dynamic_record[PARENT_ID] = Utils.syn_id_string_to_int(dynamic_record[PARENT_ID])
+        dynamic_record[FILE_HANDLE_ID] = Utils.syn_id_string_to_int(dynamic_record[FILE_HANDLE_ID])
+        return dynamic_record
 
-    job.commit()
 
 if __name__ == "__main__":
-    main()
+    mapping_list = [
+        ("changeType", "string", "change_type", "string"),
+        ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
+        ("userId", "bigint", "change_user_id", "bigint"),
+        ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
+        # Note that we map the same timestamp into a bigint so that we can extract the partition date
+        ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
+        ("snapshot.id", "string", "id", "string"),
+        ("snapshot.benefactorId", "string", "benefactor_id", "string"),
+        ("snapshot.projectId", "string", "project_id", "string"),
+        ("snapshot.parentId", "string", "parent_id", "string"),
+        ("snapshot.nodeType", "string", "node_type", "string"),
+        ("snapshot.createdOn", "bigint", "created_on", "timestamp"),
+        ("snapshot.createdByPrincipalId", "bigint", "created_by", "bigint"),
+        ("snapshot.modifiedOn", "bigint", "modified_on", "timestamp"),
+        ("snapshot.modifiedByPrincipalId", "bigint", "modified_by", "bigint"),
+        ("snapshot.versionNumber", "bigint", "version_number", "bigint"),
+        ("snapshot.fileHandleId", "string", "file_handle_id", "string"),
+        ("snapshot.name", "string", "name", "string"),
+        ("snapshot.isPublic", "boolean", "is_public", "boolean"),
+        ("snapshot.isControlled", "boolean", "is_controlled", "boolean"),
+        ("snapshot.isRestricted", "boolean", "is_restricted", "boolean"),
+        ("snapshot.effectiveArs", "array", "effective_ars", "array")
+    ]
+    node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)
