@@ -3,14 +3,16 @@ The job process the acl snapshot data.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
+OWNER_ID = "owner_id"
 
-class AclSnapshots(SnapshotGlueJob):
+class AclSnapshots(GlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         return dynamic_frame.map(f=AclSnapshots.transform)
@@ -19,9 +21,9 @@ class AclSnapshots(SnapshotGlueJob):
     @staticmethod
     def transform(dynamic_record):
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         # The records come in with the syn prefix, we need to remove that
-        dynamic_record["owner_id"] = Utils.syn_id_string_to_int(dynamic_record["owner_id"])
+        dynamic_record[OWNER_ID] = Utils.syn_id_string_to_int(dynamic_record[OWNER_ID])
         return dynamic_record
 
 
@@ -37,4 +39,4 @@ if __name__ == "__main__":
         ("snapshot.creationDate", "bigint", "created_on", "timestamp"),
         ("snapshot.resourceAccess", "array", "resource_access", "array")
     ]
-    acl_snapshots = AclSnapshots(mapping_list)
+    acl_snapshots = AclSnapshots(mapping_list, PARTITION_KEY)

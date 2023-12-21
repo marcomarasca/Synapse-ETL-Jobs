@@ -1,55 +1,37 @@
 """
-The job take the file upload records from S3 and process it.
-Processed data stored in S3 in a parquet file partitioned by the date (%Y-%m-%d pattern) of the record timestamp.
+The job process the file upload records data.
 """
 
-import sys
 from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-
 from utils import Utils
+from glue_job import GlueJob
 
 RECORD_DATE = "record_date"
 ASSOCIATED_OBJECT_ID = "association_object_id"
 
 
-# process the file upload record
-def transform(dynamic_record):
-    # This is the partition date
-    dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
+class FileUploadRecords(GlueJob):
 
-    # The records come in with the syn prefix, we need to remove that
-    dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
-    return dynamic_record
+    def execute(self, dynamic_frame):
+        return dynamic_frame.map(f=FileUploadRecords.transform)
+
+    # process the file upload record
+    @staticmethod
+    def transform(dynamic_record):
+        # This is the partition date
+        dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
+
+        # The records come in with the syn prefix, we need to remove that
+        dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
+
+        return dynamic_record
 
 
-def main():
-    args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
-    sc = SparkContext()
-    glue_context = GlueContext(sc)
-
-    job = Job(glue_context)
-    job.init(args["JOB_NAME"], args)
-
-    input_frame = glue_context.create_dynamic_frame.from_options(
-        format_options={"multiline": True},
-        connection_type="s3",
-        format="json",
-        connection_options={
-            "paths": [args["S3_SOURCE_PATH"]],
-            "recurse": True
-        },
-        # Note: even though this is optional, job bookmark does not work without it
-        transformation_ctx="input_frame"
-    )
-
-    # Maps the incoming record to a flatten table
-    mapped_frame = input_frame.apply_mapping(
-        [
+if __name__ == "__main__":
+    mapping_list = [
             ("payload.userId", "bigint", "user_id", "bigint"),
             ("timestamp", "bigint", "timestamp", "timestamp"),
             # we need to map the same timestamp into a bigint so that we can extract the partition date
@@ -60,27 +42,5 @@ def main():
             ("payload.associateId", "string", "association_object_id", "string"),
             ("stack", "string", "stack", "string"),
             ("instance", "string", "instance", "string")
-        ]
-    )
-
-    # Apply transformations
-    transformed_frame = mapped_frame.map(f=transform, info='file_transform')
-
-    # Use the catalog table to resolve any ambiguity
-    output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=args['DATABASE_NAME'],
-                                                   table_name=args['TABLE_NAME'])
-
-    # Write only if there is new data (this will error out otherwise)
-    if output_frame.count() > 0:
-        glue_context.write_dynamic_frame.from_catalog(
-            frame=output_frame,
-            database=args["DATABASE_NAME"],
-            table_name=args["TABLE_NAME"],
-            additional_options={"partitionKeys": [RECORD_DATE]}
-        )
-
-    job.commit()
-
-
-if __name__ == "__main__":
-    main()
+    ]
+    file_upload_records = FileUploadRecords(mapping_list, RECORD_DATE)

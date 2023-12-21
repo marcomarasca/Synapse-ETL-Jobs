@@ -3,30 +3,34 @@ The process the user profile snapshot data.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
+EMAIL = "email"
+EMAILS = "emails"
 
-class UserProfileSnapshots(SnapshotGlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+class UserProfileSnapshots(GlueJob):
+
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         transformed_frame = dynamic_frame.map(f=UserProfileSnapshots.transform)
         if transformed_frame.stageErrorsCount() > 0:
             self.log_errors(dynamic_frame)
         # Filed emails is list , which we need to get first email from list if it's not empty, so drop emails field
-        droppedColumn_frame = transformed_frame.drop_fields(paths=["emails"], transformation_ctx="droppedColumn_frame")
+        droppedColumn_frame = transformed_frame.drop_fields(paths=[EMAILS], transformation_ctx="droppedColumn_frame")
         return droppedColumn_frame
 
     # Process the user profile snapshot record
     @staticmethod
     def transform(dynamic_record):
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         # Get the first email if list is not empty and add email as field to dynamic frame
-        dynamic_record["email"] = UserProfileSnapshots.get_email(dynamic_record["emails"])
+        dynamic_record[EMAIL] = UserProfileSnapshots.get_email(dynamic_record[EMAILS])
         return dynamic_record
 
     @staticmethod
@@ -38,7 +42,7 @@ class UserProfileSnapshots(SnapshotGlueJob):
 
 
 if __name__ == "__main__":
-    mapping_List = [
+    mapping_list = [
         ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
         ("changeType", "string", "change_type", "string"),
         ("userId", "bigint", "change_user_id", "bigint"),
@@ -55,4 +59,4 @@ if __name__ == "__main__":
         ("snapshot.position", "string", "position", "string"),
         ("snapshot.createdOn", "bigint", "created_on", "timestamp")
     ]
-    user_profile_snapshots = UserProfileSnapshots(mapping_List)
+    user_profile_snapshots = UserProfileSnapshots(mapping_list, PARTITION_KEY)

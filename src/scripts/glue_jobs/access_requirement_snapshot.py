@@ -3,14 +3,17 @@ The job process the access requirements snapshot data.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
+DUC_TEMPLATE_FILE_HANDLE_ID = "duc_template_file_handle_id"
 
-class AccessRequirementSnapshots(SnapshotGlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+class AccessRequirementSnapshots(GlueJob):
+
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         return dynamic_frame.map(f=AccessRequirementSnapshots.transform)
@@ -19,13 +22,13 @@ class AccessRequirementSnapshots(SnapshotGlueJob):
     @staticmethod
     def transform(dynamic_record):
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
 
         # The "duc_template_file_handle_id" is not present in every type of AR
-        if "duc_template_file_handle_id" in dynamic_record:
+        if DUC_TEMPLATE_FILE_HANDLE_ID in dynamic_record:
             # The records might come in with the syn prefix, we need to remove that
-            dynamic_record["duc_template_file_handle_id"] = Utils.syn_id_string_to_int(
-                dynamic_record["duc_template_file_handle_id"])
+            dynamic_record[DUC_TEMPLATE_FILE_HANDLE_ID] = Utils.syn_id_string_to_int(
+                dynamic_record[DUC_TEMPLATE_FILE_HANDLE_ID])
         return dynamic_record
 
 
@@ -74,4 +77,4 @@ if __name__ == "__main__":
         # Next property only for PostMessageContentAccessRequirement
         ("snapshot.url", "string", "url", "string")
     ]
-    access_requirement_snapshots = AccessRequirementSnapshots(mapping_list)
+    access_requirement_snapshots = AccessRequirementSnapshots(mapping_list, PARTITION_KEY)

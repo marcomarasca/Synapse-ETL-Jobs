@@ -15,18 +15,23 @@ from awsglue.job import Job
 from pyspark.context import SparkContext
 
 
-class SnapshotGlueJob:
+class GlueJob:
 
-    def __init__(self, mapping_list):
+    def __init__(self, mapping_list, partition_key):
         sc = SparkContext()
         self.glue_context = GlueContext(sc)
         self.logger = self.glue_context.get_logger()
         self.args = getResolvedOptions(sys.argv, ["JOB_NAME", "S3_SOURCE_PATH", "DATABASE_NAME", "TABLE_NAME"])
+        self.validate_partition_key(partition_key)
         self.job = self.create_aws_glue_job()
         dynamic_frame = self.create_input_frame_from_s3()
         mapped_frame = self.apply_mappings(mapping_list, dynamic_frame)
         output_frame = self.execute(mapped_frame)
-        self.resolve_choice_and_write_output_frame(output_frame)
+        self.resolve_choice_and_write_output_frame(output_frame, partition_key)
+
+    def validate_partition_key(self, partition_key):
+        if partition_key is None:
+            raise Exception("Partition key is missing for job {}".format(self.args["JOB_NAME"]))
 
     # Create a glue job for specified job name.
     def create_aws_glue_job(self):
@@ -67,7 +72,7 @@ class SnapshotGlueJob:
         pass
 
     # Resolve the data type mismatch by comparing it with table schema and store the processed data back to s3
-    def resolve_choice_and_write_output_frame(self, transformed_frame):
+    def resolve_choice_and_write_output_frame(self, transformed_frame, partition_key):
         job_name = self.args["JOB_NAME"]
         if transformed_frame.stageErrorsCount() > 0:
             self.log_errors(transformed_frame)
@@ -81,7 +86,7 @@ class SnapshotGlueJob:
                 frame=output_frame,
                 database=self.args["DATABASE_NAME"],
                 table_name=self.args["TABLE_NAME"],
-                additional_options={"partitionKeys": ["snapshot_date"]}
+                additional_options={"partitionKeys": [partition_key]}
             )
         self.job.commit()
         self.logger.info("Glue job {} finished.".format(self.args["JOB_NAME"]))

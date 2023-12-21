@@ -3,14 +3,16 @@ The job process the project settings snapshot.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
+PROJECT_ID = "project_id"
 
-class ProjectSettingSnapshots(SnapshotGlueJob):
+class ProjectSettingSnapshots(GlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         return dynamic_frame.map(f=ProjectSettingSnapshots.transform)
@@ -19,15 +21,15 @@ class ProjectSettingSnapshots(SnapshotGlueJob):
     @staticmethod
     def transform(dynamic_record):
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
-        if "project_id" in dynamic_record:
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+        if PROJECT_ID in dynamic_record:
             # The records might come in with the syn prefix, we need to remove that
-            dynamic_record["project_id"] = Utils.syn_id_string_to_int(dynamic_record["project_id"])
+            dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
         return dynamic_record
 
 
 if __name__ == "__main__":
-    mapping_List = [
+    mapping_list = [
         ("changeType", "string", "change_type", "string"),
         ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
         ("userId", "bigint", "change_user_id", "bigint"),
@@ -41,4 +43,4 @@ if __name__ == "__main__":
         ("snapshot.etag", "string", "etag", "string"),
         ("snapshot.locations", "array", "locations", "array"),
     ]
-    project_setting_snapshots = ProjectSettingSnapshots(mapping_List)
+    project_setting_snapshots = ProjectSettingSnapshots(mapping_list, PARTITION_KEY)

@@ -3,31 +3,29 @@ The job process the file handle snapshot data.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
 
-class FileSnapshots(SnapshotGlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+class FileSnapshots(GlueJob):
+
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
-        transformed_frame = dynamic_frame.map(f=FileSnapshots.transform)
-        if transformed_frame.stageErrorsCount() > 0:
-            transformed_frame.errorsAsDynamicFrame().toDF().show()
-            raise Exception("Error in job! See the log!")
-        return transformed_frame
+        return dynamic_frame.map(f=FileSnapshots.transform)
 
     # Process the file snapshot record
     @staticmethod
     def transform(dynamic_record):
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         return dynamic_record
 
 
 if __name__ == "__main__":
-    mapping_List = [
+    mapping_list = [
         ("changeType", "string", "change_type", "string"),
         ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
         ("userId", "bigint", "change_user_id", "bigint"),
@@ -50,4 +48,4 @@ if __name__ == "__main__":
         ("snapshot.isPreview", "boolean", "is_preview", "boolean"),
         ("snapshot.status", "string", "status", "string")
     ]
-    file_snapshots = FileSnapshots(mapping_List)
+    file_snapshots = FileSnapshots(mapping_list, PARTITION_KEY)

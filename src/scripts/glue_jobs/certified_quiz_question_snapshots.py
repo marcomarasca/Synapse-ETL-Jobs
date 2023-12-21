@@ -2,15 +2,17 @@
 The job process the certified user passing snapshot data.
 """
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 import gs_explode
 
+PARTITION_KEY = "snapshot_date"
 
-class CertifiedQuizQuestionSnapshots(SnapshotGlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+class CertifiedQuizQuestionSnapshots(GlueJob):
+
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         # Apply transformations to compute the partition date and array of questionIndex and isCorrect values
@@ -59,4 +61,5 @@ class CertifiedQuizQuestionSnapshots(SnapshotGlueJob):
 
 if __name__ == "__main__":
     # There is no mapping required before processing the certified quiz question record
-    certified_quiz_question_snapshots = CertifiedQuizQuestionSnapshots([])
+    certified_quiz_question_snapshots = CertifiedQuizQuestionSnapshots([], PARTITION_KEY)
+

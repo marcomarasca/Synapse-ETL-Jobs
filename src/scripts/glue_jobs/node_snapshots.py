@@ -3,38 +3,42 @@ The job process the node snapshot data.
 """
 
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
+ID = "id"
+BENEFACTOR_ID = "benefactor_id"
+PROJECT_ID = "project_id"
+PARENT_ID = "parent_id"
+FILE_HANDLE_ID = "file_handle_id"
 
-class NodeSnapshots(SnapshotGlueJob):
 
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+class NodeSnapshots(GlueJob):
+
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
-        transformed_frame = dynamic_frame.map(f=NodeSnapshots.transform)
-        if transformed_frame.stageErrorsCount() > 0:
-            self.log_errors(transformed_frame)
-        return transformed_frame
+        return dynamic_frame.map(f=NodeSnapshots.transform)
 
     # Process the node snapshot record
     @staticmethod
     def transform(dynamic_record):
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
 
         # The records come in with the syn prefix, we need to remove that
-        dynamic_record["id"] = Utils.syn_id_string_to_int(dynamic_record["id"])
-        dynamic_record["benefactor_id"] = Utils.syn_id_string_to_int(dynamic_record["benefactor_id"])
-        dynamic_record["project_id"] = Utils.syn_id_string_to_int(dynamic_record["project_id"])
-        dynamic_record["parent_id"] = Utils.syn_id_string_to_int(dynamic_record["parent_id"])
-        dynamic_record["file_handle_id"] = Utils.syn_id_string_to_int(dynamic_record["file_handle_id"])
+        dynamic_record[ID] = Utils.syn_id_string_to_int(dynamic_record[ID])
+        dynamic_record[BENEFACTOR_ID] = Utils.syn_id_string_to_int(dynamic_record[BENEFACTOR_ID])
+        dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
+        dynamic_record[PARENT_ID] = Utils.syn_id_string_to_int(dynamic_record[PARENT_ID])
+        dynamic_record[FILE_HANDLE_ID] = Utils.syn_id_string_to_int(dynamic_record[FILE_HANDLE_ID])
         return dynamic_record
 
 
 if __name__ == "__main__":
-    mapping_List = [
+    mapping_list = [
         ("changeType", "string", "change_type", "string"),
         ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
         ("userId", "bigint", "change_user_id", "bigint"),
@@ -58,4 +62,4 @@ if __name__ == "__main__":
         ("snapshot.isRestricted", "boolean", "is_restricted", "boolean"),
         ("snapshot.effectiveArs", "array", "effective_ars", "array")
     ]
-    node_snapshots = NodeSnapshots(mapping_List)
+    node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)

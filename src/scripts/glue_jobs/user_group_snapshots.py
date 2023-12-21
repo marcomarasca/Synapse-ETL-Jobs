@@ -4,13 +4,15 @@ The process the user group snapshot data.
 
 import sys
 from awsglue.transforms import *
-from snapshot_glue_job import SnapshotGlueJob
+from glue_job import GlueJob
 from utils import Utils
 
+PARTITION_KEY = "snapshot_date"
 
-class UserGroupSnapshots(SnapshotGlueJob):
-    def __init__(self, mapping_list):
-        super().__init__(mapping_list)
+
+class UserGroupSnapshots(GlueJob):
+    def __init__(self, mapping_list, partition_key):
+        super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
         return dynamic_frame.map(f=UserGroupSnapshots.transform)
@@ -18,12 +20,12 @@ class UserGroupSnapshots(SnapshotGlueJob):
     # Process the user group snapshot record
     @staticmethod
     def transform(dynamic_record):
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["snapshot_date"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         return dynamic_record
 
 
 if __name__ == "__main__":
-    mapping_List = [
+    mapping_list = [
         ("changeTimestamp", "bigint", "change_timestamp", "timestamp"),
         ("changeType", "string", "change_type", "string"),
         ("userId", "bigint", "change_user_id", "bigint"),
@@ -34,4 +36,4 @@ if __name__ == "__main__":
         ("snapshot.isIndividual", "boolean", "is_individual", "boolean"),
         ("snapshot.creationDate", "bigint", "created_on", "timestamp"),
     ]
-    user_group_snapshots = UserGroupSnapshots(mapping_List)
+    user_group_snapshots = UserGroupSnapshots(mapping_list, PARTITION_KEY)
