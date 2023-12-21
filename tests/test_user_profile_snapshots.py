@@ -1,7 +1,10 @@
 import unittest
+import sys
+from pathlib import Path
+p = Path(__file__).parents[1]
+sys.path.append(str(p) + "/src/scripts/glue_jobs")
 
-from src.scripts.glue_jobs.user_profile_snapshots import UserProfileSnapshots
-
+from user_profile_snapshots import UserProfileSnapshots
 
 class TestUserProfileSnapshots(unittest.TestCase):
 
