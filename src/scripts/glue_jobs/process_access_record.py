@@ -40,7 +40,8 @@ class ProcessAccessRecords(GlueJob):
         super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=ProcessAccessRecords.transform)
+        transformed_frame = dynamic_frame.map(f=ProcessAccessRecords.transform)
+        return transformed_frame.resolveChoice(specs=[("entity_id", "cast:long")])
 
     # Process the access record
     @staticmethod
@@ -188,7 +189,7 @@ class ProcessAccessRecords(GlueJob):
                 entity_id = matcher.group(1)
                 if entity_id.startswith("syn"):
                     entity_id = entity_id[3:]
-        return int(entity_id)
+        return entity_id
 
 
 if __name__ == "__main__":
@@ -216,6 +217,6 @@ if __name__ == "__main__":
         ("payload.responseStatus", "bigint", "response_status", "bigint"),
         ("payload.oauthClientId", "string", "oauth_client_id", "string"),
         ("payload.basicAuthUsername", "string", "basic_auth_username", "string"),
-        ("payload.authenticationMethod", "string", "auth_method", "string"),
+        ("payload.authenticationMethod", "string", "auth_method", "string")
     ]
     process_access_records = ProcessAccessRecords(mapping_list, PARTITION_KEY)
