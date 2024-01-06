@@ -320,7 +320,7 @@ class TestTransformedAccessRecord(unittest.TestCase):
     def test_get_client_version_for_web(self):
         expected_output = "435.0"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "Synapse-Java-Client/431.0 Synapse-Web-Client/435.0")
+                                                              "Synapse-Java-Client/431.0 Synapse-Web-Client/435.0")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_java(self):
@@ -366,33 +366,33 @@ class TestTransformedAccessRecord(unittest.TestCase):
     def test_get_client_version_for_mozilla(self):
         expected_output = "5.0"
         real_output = ProcessAccessRecords.get_client_version("WEB", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                                                                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
+                                                                     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_opera(self):
         expected_output = "9.80"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.0")
+                                                              "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.0")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_lynx(self):
         expected_output = "2.8.5rel.5"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "Lynx/2.8.5rel.5 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.8e")
+                                                              "Lynx/2.8.5rel.5 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.8e")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_ucweb(self):
         expected_output = "2.0"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H)"
-                                                               " U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
+                                                              "UCWEB/2.0 (MIDP-2.0; U; Adr 4.4.4; en-US; SM-G360H)"
+                                                              " U2/1.0.0 UCBrowser/10.9.0.946 U2/1.0.0 Mobile")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_chromium(self):
         expected_output = "5.0"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 "
-                                                               "(KHTML, like Gecko) Ubuntu Chromium/115.0.5805.207 Chrome/115.0.5805.207 Safari/537.36")
+                                                              "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 "
+                                                              "(KHTML, like Gecko) Ubuntu Chromium/115.0.5805.207 Chrome/115.0.5805.207 Safari/537.36")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_chrome(self):
@@ -402,12 +402,12 @@ class TestTransformedAccessRecord(unittest.TestCase):
     def test_get_client_version_for_safari(self):
         expected_output = "15609.4.1"
         real_output = ProcessAccessRecords.get_client_version("WEB",
-                                                               "Safari/15609.4.1 CFNetwork/1128.0.1 Darwin/19.6.0 (x86_64)")
+                                                              "Safari/15609.4.1 CFNetwork/1128.0.1 Darwin/19.6.0 (x86_64)")
         self.assertEqual(expected_output, real_output)
 
     def test_get_client_version_for_unknown(self):
         real_output = ProcessAccessRecords.get_client_version("UNKNOWN",
-                                                               "AwarioSmartBot/1.0 (+https://awario.com/bots.html; bots@awario.com)")
+                                                              "AwarioSmartBot/1.0 (+https://awario.com/bots.html; bots@awario.com)")
         self.assertIsNone(real_output)
 
     def test_get_client_version_for_none_client(self):
@@ -419,12 +419,12 @@ class TestTransformedAccessRecord(unittest.TestCase):
         self.assertIsNone(real_output)
 
     def test_get_entity_id_for_syn_id(self):
-        expected_output = "12223809"
+        expected_output = 12223809
         real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/syn12223809")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_id_without_syn(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/1234")
         self.assertEqual(expected_output, real_output)
 
@@ -437,16 +437,25 @@ class TestTransformedAccessRecord(unittest.TestCase):
         self.assertIsNone(real_output)
 
     def test_get_entity_id_for_url_having_two_syn(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/syn1234/check/syn123456")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_case_insensitive(self):
-        expected_output = "1234"
+        expected_output = 1234
         real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/Syn1234/check")
         self.assertEqual(expected_output, real_output)
 
     def test_get_entity_id_for_with_version(self):
-        expected_output = "12345"
+        expected_output = 12345
         real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/SYN12345.1/check")
+        self.assertEqual(expected_output, real_output)
+
+    def test_get_entity_id_for_large_value(self):
+        real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/syn22222222222222222222222222/check")
+        self.assertIsNone(real_output)
+
+    def test_get_entity_id_for_sys_maxsize(self):
+        expected_output = sys.maxsize
+        real_output = ProcessAccessRecords.get_entity_id("/repo/v1/entity/syn" + str(sys.maxsize) + "/check")
         self.assertEqual(expected_output, real_output)

@@ -3,6 +3,7 @@ The job process the access record data.
 """
 
 import re
+import sys
 import urllib.parse
 
 from awsglue.transforms import *
@@ -40,8 +41,7 @@ class ProcessAccessRecords(GlueJob):
         super().__init__(mapping_list, partition_key)
 
     def execute(self, dynamic_frame):
-        transformed_frame = dynamic_frame.map(f=ProcessAccessRecords.transform)
-        return transformed_frame.resolveChoice(specs=[("entity_id", "cast:long")])
+        return dynamic_frame.map(f=ProcessAccessRecords.transform)
 
     # Process the access record
     @staticmethod
@@ -189,6 +189,9 @@ class ProcessAccessRecords(GlueJob):
                 entity_id = matcher.group(1)
                 if entity_id.startswith("syn"):
                     entity_id = entity_id[3:]
+            entity_id = int(entity_id)
+            if entity_id > sys.maxsize:
+                return None
         return entity_id
 
 
