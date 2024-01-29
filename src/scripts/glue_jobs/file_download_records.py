@@ -17,19 +17,22 @@ class FileDownloadRecords(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=FileDownloadRecords.transform)
+    def execute(self, dynamic_frame, logger):
+        return dynamic_frame.map(lambda record: FileDownloadRecords.transform(record, logger))
 
     # process the file download record
     @staticmethod
-    def transform(dynamic_record):
-        # This is the partition date
-        dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
-        # The records come in with the syn prefix, we need to remove that
-        dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
-        # If downloaded file handle id is not present in the record, or it's null then file handle id should be assigned to it.
-        if DOWNLOADED_FILE_HANDLE_ID not in dynamic_record.keys() or dynamic_record[DOWNLOADED_FILE_HANDLE_ID] is None:
-            dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[FILE_HANDLE_ID]
+    def transform(dynamic_record, logger):
+        try:
+            # This is the partition date
+            dynamic_record[RECORD_DATE] = Utils.ms_to_partition_date(dynamic_record[RECORD_DATE])
+            # The records come in with the syn prefix, we need to remove that
+            dynamic_record[ASSOCIATED_OBJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[ASSOCIATED_OBJECT_ID])
+            # If downloaded file handle id is not present in the record, or it's null then file handle id should be assigned to it.
+            if DOWNLOADED_FILE_HANDLE_ID not in dynamic_record.keys() or dynamic_record[DOWNLOADED_FILE_HANDLE_ID] is None:
+                dynamic_record[DOWNLOADED_FILE_HANDLE_ID] = dynamic_record[FILE_HANDLE_ID]
+        except Exception as error:
+            logger.error("Error occurred in filedownloadrecords : ", error)
 
         return dynamic_record
 

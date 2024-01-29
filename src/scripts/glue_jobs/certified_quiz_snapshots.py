@@ -14,14 +14,18 @@ class CertifiedQuizSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=CertifiedQuizSnapshots.transform)
+    def execute(self, dynamic_frame, logger):
+        return dynamic_frame.map(lambda record: CertifiedQuizSnapshots.transform(record, logger))
 
     # Process the certified quiz snapshot record
     @staticmethod
-    def transform(dynamic_record):
-        # This is the partition date
-        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+    def transform(dynamic_record, logger):
+        try:
+            # This is the partition date
+            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+        except Exception as error:
+            logger.error("Error occurred in certifiedquizSnapshots : ", error)
+
         return dynamic_record
 
 

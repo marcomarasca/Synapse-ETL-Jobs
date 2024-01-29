@@ -19,21 +19,25 @@ class NodeSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=NodeSnapshots.transform)
+    def execute(self, dynamic_frame, logger):
+        return dynamic_frame.map(lambda record: NodeSnapshots.transform(record, logger))
 
     # Process the node snapshot record
     @staticmethod
-    def transform(dynamic_record):
-        # This is the partition date
-        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+    def transform(dynamic_record, logger):
+        try:
+            # This is the partition date
+            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
 
-        # The records come in with the syn prefix, we need to remove that
-        dynamic_record[ID] = Utils.syn_id_string_to_int(dynamic_record[ID])
-        dynamic_record[BENEFACTOR_ID] = Utils.syn_id_string_to_int(dynamic_record[BENEFACTOR_ID])
-        dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
-        dynamic_record[PARENT_ID] = Utils.syn_id_string_to_int(dynamic_record[PARENT_ID])
-        dynamic_record[FILE_HANDLE_ID] = Utils.syn_id_string_to_int(dynamic_record[FILE_HANDLE_ID])
+            # The records come in with the syn prefix, we need to remove that
+            dynamic_record[ID] = Utils.syn_id_string_to_int(dynamic_record[ID])
+            dynamic_record[BENEFACTOR_ID] = Utils.syn_id_string_to_int(dynamic_record[BENEFACTOR_ID])
+            dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
+            dynamic_record[PARENT_ID] = Utils.syn_id_string_to_int(dynamic_record[PARENT_ID])
+            dynamic_record[FILE_HANDLE_ID] = Utils.syn_id_string_to_int(dynamic_record[FILE_HANDLE_ID])
+        except Exception as error:
+            logger.error("Error occurred in nodesnapshots : ", error)
+
         return dynamic_record
 
 

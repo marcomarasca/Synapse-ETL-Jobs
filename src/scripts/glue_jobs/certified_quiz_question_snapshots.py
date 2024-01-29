@@ -14,9 +14,9 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
+    def execute(self, dynamic_frame, logger):
         # Apply transformations to compute the partition date and array of questionIndex and isCorrect values
-        transformed_frame = dynamic_frame.map(f=CertifiedQuizQuestionSnapshots.transform)
+        transformed_frame = dynamic_frame.map(lambda record: CertifiedQuizQuestionSnapshots.transform(record, logger))
         if transformed_frame.stageErrorsCount() > 0:
             self.log_errors(transformed_frame)
         # Explode method creates separate row for each correction
@@ -42,20 +42,24 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
 
     # Process the certified quiz question snapshot record
     @staticmethod
-    def transform(dynamic_record):
-        # Correction array contains questionIndex and isCorrect, which is need for quiz question record
-        corrections = dynamic_record["snapshot"]["corrections"]
-        correctionInfo = []
-        for correction in corrections:
-            info = {
-                "questionIndex": correction["question"]["questionIndex"],
-                "isCorrect": correction["isCorrect"]
-            }
-            correctionInfo.append(info)
+    def transform(dynamic_record, logger):
+        try:
+            # Correction array contains questionIndex and isCorrect, which is need for quiz question record
+            corrections = dynamic_record["snapshot"]["corrections"]
+            correctionInfo = []
+            for correction in corrections:
+                info = {
+                    "questionIndex": correction["question"]["questionIndex"],
+                    "isCorrect": correction["isCorrect"]
+                }
+                correctionInfo.append(info)
 
-        dynamic_record["corrections"] = correctionInfo
-        # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["changeTimestamp"])
+            dynamic_record["corrections"] = correctionInfo
+            # This is the partition date
+            dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["changeTimestamp"])
+        except Exception as error:
+            logger.error("Error occurred in certifiedquizquestionsnapshots : ", error)
+
         return dynamic_record
 
 

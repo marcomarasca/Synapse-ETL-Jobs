@@ -14,17 +14,20 @@ class ProjectSettingSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=ProjectSettingSnapshots.transform)
+    def execute(self, dynamic_frame, logger):
+        return dynamic_frame.map(lambda record: ProjectSettingSnapshots.transform(record, logger))
 
     # Process the project setting snapshot record
     @staticmethod
-    def transform(dynamic_record):
-        # This is the partition date
-        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
-        if PROJECT_ID in dynamic_record:
-            # The records might come in with the syn prefix, we need to remove that
-            dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
+    def transform(dynamic_record, logger):
+        try:
+            # This is the partition date
+            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+            if PROJECT_ID in dynamic_record:
+                # The records might come in with the syn prefix, we need to remove that
+                dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
+        except Exception as error:
+            logger.error("Error occurred in projectsettingsnapshots : ", error)
         return dynamic_record
 
 

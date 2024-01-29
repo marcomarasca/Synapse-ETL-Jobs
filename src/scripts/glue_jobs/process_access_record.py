@@ -40,20 +40,23 @@ class ProcessAccessRecords(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame):
-        return dynamic_frame.map(f=ProcessAccessRecords.transform)
+    def execute(self, dynamic_frame, logger):
+        return dynamic_frame.map(lambda record: ProcessAccessRecords.transform(record, logger))
 
     # Process the access record
     @staticmethod
-    def transform(dynamic_record):
-        dynamic_record["normalized_method_signature"] = dynamic_record["method"] + " " + ProcessAccessRecords.get_normalized_method_signature(dynamic_record["request_url"])
-        dynamic_record["client"] = ProcessAccessRecords.get_client(dynamic_record["user_agent"])
-        dynamic_record["client_version"] = ProcessAccessRecords.get_client_version(dynamic_record["client"],
-                                                                                   dynamic_record["user_agent"])
-        dynamic_record["entity_id"] = ProcessAccessRecords.get_entity_id(dynamic_record["request_url"])
-        # This is the partition date
-        dynamic_record["record_date"] = Utils.ms_to_partition_date(dynamic_record["record_date"])
-        dynamic_record["instance"] = Utils.remove_padded_leading_zeros(dynamic_record["instance"])
+    def transform(dynamic_record, logger):
+        try:
+            dynamic_record["normalized_method_signature"] = dynamic_record["method"] + " " + ProcessAccessRecords.get_normalized_method_signature(dynamic_record["request_url"])
+            dynamic_record["client"] = ProcessAccessRecords.get_client(dynamic_record["user_agent"])
+            dynamic_record["client_version"] = ProcessAccessRecords.get_client_version(dynamic_record["client"],
+                                                                                       dynamic_record["user_agent"])
+            dynamic_record["entity_id"] = ProcessAccessRecords.get_entity_id(dynamic_record["request_url"])
+            # This is the partition date
+            dynamic_record["record_date"] = Utils.ms_to_partition_date(dynamic_record["record_date"])
+            dynamic_record["instance"] = Utils.remove_padded_leading_zeros(dynamic_record["instance"])
+        except Exception as error:
+            logger.error("Error occurred in processaccessrecord : ", error)
         return dynamic_record
 
     @staticmethod
