@@ -79,8 +79,11 @@ class GlueJob:
 
         output_frame = transformed_frame.resolveChoice(choice='match_catalog', database=self.args['DATABASE_NAME'],
                                                        table_name=self.args['TABLE_NAME'])
-        self.logger.info("Total output records write to s3 is {}".format(output_frame.count()))
+        if output_frame.stageErrorsCount() > 0:
+            self.log_errors(output_frame)
+
         if output_frame.count() > 0:
+            self.logger.info("Total output records write to s3 is {}".format(output_frame.count()))
             self.glue_context.write_dynamic_frame.from_catalog(
                 frame=output_frame,
                 database=self.args["DATABASE_NAME"],
