@@ -14,20 +14,16 @@ class AclSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame, logger):
-        return dynamic_frame.map(lambda record: AclSnapshots.transform(record, logger))
+    def execute(self, dynamic_frame):
+        return dynamic_frame.map(f=AclSnapshots.transform)
 
     # Process the acl snapshot record
     @staticmethod
-    def transform(dynamic_record, logger):
-        try:
-            # This is the partition date
-            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
-            # The records come in with the syn prefix, we need to remove that
-            dynamic_record[OWNER_ID] = Utils.syn_id_string_to_int(dynamic_record[OWNER_ID])
-        except Exception as error:
-            logger.error("Error occurred in aclsnapshots : ", error)
-
+    def transform(dynamic_record):
+        # This is the partition date
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+        # The records come in with the syn prefix, we need to remove that
+        dynamic_record[OWNER_ID] = Utils.syn_id_string_to_int(dynamic_record[OWNER_ID])
         return dynamic_record
 
 

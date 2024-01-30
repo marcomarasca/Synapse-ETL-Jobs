@@ -16,8 +16,8 @@ class UserProfileSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame, logger):
-        transformed_frame = dynamic_frame.map(lambda record: UserProfileSnapshots.transform(record, logger))
+    def execute(self, dynamic_frame):
+        transformed_frame = dynamic_frame.map(f=UserProfileSnapshots.transform)
         if transformed_frame.stageErrorsCount() > 0:
             self.log_errors(dynamic_frame)
         # Filed emails is list , which we need to get first email from list if it's not empty, so drop emails field
@@ -26,15 +26,11 @@ class UserProfileSnapshots(GlueJob):
 
     # Process the user profile snapshot record
     @staticmethod
-    def transform(dynamic_record, logger):
-        try:
-            # This is the partition date
-            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
-            # Get the first email if list is not empty and add email as field to dynamic frame
-            dynamic_record[EMAIL] = UserProfileSnapshots.get_email(dynamic_record[EMAILS])
-        except Exception as error:
-            logger.error("Error occurred in userprofilesnapshots : ", error)
-
+    def transform(dynamic_record):
+        # This is the partition date
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+        # Get the first email if list is not empty and add email as field to dynamic frame
+        dynamic_record[EMAIL] = UserProfileSnapshots.get_email(dynamic_record[EMAILS])
         return dynamic_record
 
     @staticmethod

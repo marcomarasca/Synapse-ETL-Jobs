@@ -14,17 +14,13 @@ class UserGroupSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame, logger):
-        return dynamic_frame.map(lambda record: UserGroupSnapshots.transform(record, logger))
+    def execute(self, dynamic_frame):
+        return dynamic_frame.map(f=UserGroupSnapshots.transform)
 
     # Process the user group snapshot record
     @staticmethod
-    def transform(dynamic_record, logger):
-        try:
-            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
-        except Exception as error:
-            logger.error("Error occurred in usergroupsnapshots : ", error)
-
+    def transform(dynamic_record):
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         return dynamic_record
 
 

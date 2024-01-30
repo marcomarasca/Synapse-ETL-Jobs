@@ -14,18 +14,14 @@ class VerificationSubmissionSnapshots(GlueJob):
     def __init__(self, mapping_list, partition_key):
         super().__init__(mapping_list, partition_key)
 
-    def execute(self, dynamic_frame, logger):
-        return dynamic_frame.map(lambda record: VerificationSubmissionSnapshots.transform(record, logger))
+    def execute(self, dynamic_frame):
+        return dynamic_frame.map(f=VerificationSubmissionSnapshots.transform)
 
     # Process the user profile snapshot record
     @staticmethod
-    def transform(dynamic_record, logger):
-        try:
-            # This is the partition date
-            dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
-        except Exception as error:
-            logger.error("Error occurred in verificationsubmissionsnapshots : ", error)
-
+    def transform(dynamic_record):
+        # This is the partition date
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         return dynamic_record
 
 
