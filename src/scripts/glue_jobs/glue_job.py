@@ -56,7 +56,7 @@ class GlueJob:
             # Note: even though this is optional, job bookmark does not work without it
             transformation_ctx="input_frame"
         )
-        self.logger.info("Total input records read from s3 is {}".format(input_frame.count()))
+        self.logger.info("The total number of records retrieved from s3 is {}".format(input_frame.count()))
         return input_frame
 
     # Apply mapping to the raw JSON data
@@ -83,7 +83,7 @@ class GlueJob:
             self.log_errors(output_frame)
 
         if output_frame.count() > 0:
-            self.logger.info("Total output records write to s3 is {}".format(output_frame.count()))
+            self.logger.info("The total number of records saved to s3 is {}".format(output_frame.count()))
             self.glue_context.write_dynamic_frame.from_catalog(
                 frame=output_frame,
                 database=self.args["DATABASE_NAME"],
@@ -94,9 +94,9 @@ class GlueJob:
         self.logger.info("Glue job finished.")
 
     def log_errors(self, dynamic_frame):
-        self.logger.error("Error count is {} ".format(dynamic_frame.stageErrorsCount()))
+        self.logger.error("The total number of error count in dynamic_frame is {} ".format(dynamic_frame.stageErrorsCount()))
         error_record = dynamic_frame.errorsAsDynamicFrame().toDF().head()
         error_fields = error_record["error"]
         for key in error_fields.asDict().keys():
-            self.logger.error("\n Job has error {} : {}".format(key, error_fields[key]))
-        raise Exception("Error in job! See the log!")
+            self.logger.error("{} : {}".format(key, error_fields[key]))
+        raise Exception("Job failed with error : {}".format(error_fields["msg"]))
