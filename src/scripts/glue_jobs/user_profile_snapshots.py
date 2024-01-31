@@ -57,6 +57,7 @@ if __name__ == "__main__":
         ("snapshot.location", "string", "location", "string"),
         ("snapshot.company", "string", "company", "string"),
         ("snapshot.position", "string", "position", "string"),
-        ("snapshot.createdOn", "bigint", "created_on", "timestamp")
+        ("snapshot.createdOn", "bigint", "created_on", "timestamp"),
+        ("snapshot.twoFactorAuthEnabled", "boolean", "is_two_factor_auth_enabled", "boolean")
     ]
     user_profile_snapshots = UserProfileSnapshots(mapping_list, PARTITION_KEY)
