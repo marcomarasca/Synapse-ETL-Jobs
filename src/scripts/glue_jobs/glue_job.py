@@ -94,9 +94,14 @@ class GlueJob:
         self.logger.info("Glue job finished.")
 
     def log_errors(self, dynamic_frame):
-        self.logger.error("The total number of error count in dynamic_frame is {} ".format(dynamic_frame.stageErrorsCount()))
-        error_record = dynamic_frame.errorsAsDynamicFrame().toDF().head()
-        error_fields = error_record["error"]
-        for key in error_fields.asDict().keys():
-            self.logger.error("{} : {}".format(key, error_fields[key]))
-        raise Exception("Job failed with error : {}".format(error_fields["msg"]))
+        self.logger.error(
+            "The total number of error count in dynamic frame is {} ".format(dynamic_frame.stageErrorsCount()))
+        df = dynamic_frame.errorsAsDynamicFrame().toDF()
+        last_error_msg = "UNKNOWN"
+        for row in df.rdd.collect():
+            error_fields = row["error"]
+            for key in error_fields.asDict().keys():
+                self.logger.error("{} : {}".format(key, error_fields[key]))
+            if error_fields["msg"] is not None:
+                last_error_msg = error_fields["msg"]
+        raise Exception("Job failed with error : {}".format(last_error_msg))
