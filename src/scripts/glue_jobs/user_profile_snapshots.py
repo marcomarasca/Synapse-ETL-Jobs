@@ -19,7 +19,7 @@ class UserProfileSnapshots(GlueJob):
     def execute(self, dynamic_frame):
         transformed_frame = dynamic_frame.map(f=UserProfileSnapshots.transform)
         if transformed_frame.stageErrorsCount() > 0:
-            self.log_errors(dynamic_frame)
+            self.log_errors(transformed_frame)
         # Filed emails is list , which we need to get first email from list if it's not empty, so drop emails field
         droppedColumn_frame = transformed_frame.drop_fields(paths=[EMAILS], transformation_ctx="droppedColumn_frame")
         return droppedColumn_frame
@@ -57,6 +57,7 @@ if __name__ == "__main__":
         ("snapshot.location", "string", "location", "string"),
         ("snapshot.company", "string", "company", "string"),
         ("snapshot.position", "string", "position", "string"),
-        ("snapshot.createdOn", "bigint", "created_on", "timestamp")
+        ("snapshot.createdOn", "bigint", "created_on", "timestamp"),
+        ("snapshot.twoFactorAuthEnabled", "boolean", "is_two_factor_auth_enabled", "boolean")
     ]
     user_profile_snapshots = UserProfileSnapshots(mapping_list, PARTITION_KEY)
