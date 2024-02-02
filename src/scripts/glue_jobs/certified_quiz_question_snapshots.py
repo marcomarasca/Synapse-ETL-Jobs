@@ -17,12 +17,12 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
     def execute(self, dynamic_frame):
         # Apply transformations to compute the partition date and array of questionIndex and isCorrect values
         transformed_frame = dynamic_frame.map(f=CertifiedQuizQuestionSnapshots.transform)
-        if transformed_frame.stageErrorsCount() > 0:
-            self.log_errors(transformed_frame)
+        self.check_and_log_errors(transformed_frame)
         # Explode method creates separate row for each correction
         exploded_frame = transformed_frame.gs_explode(
             colName="corrections", newCol="correction"
         )
+        self.check_and_log_errors(exploded_frame)
         # Map each rows into required table record
         mapped_output_frame = exploded_frame.apply_mapping(
             [

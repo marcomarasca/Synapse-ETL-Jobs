@@ -18,8 +18,7 @@ class UserProfileSnapshots(GlueJob):
 
     def execute(self, dynamic_frame):
         transformed_frame = dynamic_frame.map(f=UserProfileSnapshots.transform)
-        if transformed_frame.stageErrorsCount() > 0:
-            self.log_errors(transformed_frame)
+        self.check_and_log_errors(transformed_frame)
         # Filed emails is list , which we need to get first email from list if it's not empty, so drop emails field
         droppedColumn_frame = transformed_frame.drop_fields(paths=[EMAILS], transformation_ctx="droppedColumn_frame")
         return droppedColumn_frame
