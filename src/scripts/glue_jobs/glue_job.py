@@ -57,7 +57,6 @@ class GlueJob:
             transformation_ctx="input_frame"
         )
         self.check_and_log_errors(input_frame)
-        self.logger.info("The total number of records retrieved from s3 is {}".format(input_frame.count()))
         return input_frame
 
     # Apply mapping to the raw JSON data
@@ -81,7 +80,6 @@ class GlueJob:
         self.check_and_log_errors(output_frame)
 
         if output_frame.count() > 0:
-            self.logger.info("The total number of records saved to s3 is {}".format(output_frame.count()))
             self.glue_context.write_dynamic_frame.from_catalog(
                 frame=output_frame,
                 database=self.args["DATABASE_NAME"],
@@ -92,14 +90,15 @@ class GlueJob:
         self.logger.info("Glue job finished.")
 
     def check_and_log_errors(self, dynamic_frame):
-        if dynamic_frame.stageErrorsCount() > 0:
+        error_count = dynamic_frame.stageErrorsCount()
+        if error_count > 0:
             self.logger.error(
-                "The total number of error count in dynamic frame is {} ".format(dynamic_frame.stageErrorsCount()))
-            df = dynamic_frame.errorsAsDynamicFrame().toDF()
-            last_error_msg = "UNKNOWN"
-            for row in df.rdd.collect():
-                error_fields = row["error"]
-                self.logger.error("Error in record : {}".format(row))
-                if error_fields["msg"] is not None:
-                    last_error_msg = error_fields["msg"]
-            raise Exception("Job failed with error : {}".format(last_error_msg))
+                "The total number of error count in dynamic frame is {} ".format(error_count))
+            error_record = dynamic_frame.errorsAsDynamicFrame().toDF().head()
+            error_fields = error_record["error"]
+            error_msg = "UNKNOWN"
+            for key in error_fields.asDict().keys():
+                self.logger.error("{} : {}".format(key, error_fields[key]))
+                if key == 'msg' and error_fields["msg"] is not None:
+                    error_msg = error_fields["msg"]
+            raise Exception("Job failed with error : {}".format(error_msg))
