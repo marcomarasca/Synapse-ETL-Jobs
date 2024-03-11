@@ -60,6 +60,8 @@ if __name__ == "__main__":
         ("snapshot.isPublic", "boolean", "is_public", "boolean"),
         ("snapshot.isControlled", "boolean", "is_controlled", "boolean"),
         ("snapshot.isRestricted", "boolean", "is_restricted", "boolean"),
-        ("snapshot.effectiveArs", "array", "effective_ars", "array")
+        ("snapshot.effectiveArs", "array", "effective_ars", "array"),
+        ("snapshot.annotations", "string", "annotations", "string"),
+        ("snapshot.derivedAnnotations", "string", "derived_annotations", "string")
     ]
     node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)
