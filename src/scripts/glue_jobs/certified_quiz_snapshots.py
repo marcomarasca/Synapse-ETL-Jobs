@@ -22,6 +22,15 @@ class CertifiedQuizSnapshots(GlueJob):
     def transform(dynamic_record):
         # This is the partition date
         dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
+        
+        # The following fields were introduced by https://sagebionetworks.jira.com/browse/PLFM-8365
+        # and need default values for older records
+        if "revoked" not in dynamic_record or dynamic_record["revoked"] is None:
+            dynamic_record["revoked"] = False
+        
+        if "certified" not in dynamic_record or dynamic_record["certified"] is None:
+            dynamic_record["certified"] = dynamic_record["passed"]
+
         return dynamic_record
 
 
@@ -37,6 +46,9 @@ if __name__ == "__main__":
         ("snapshot.userId", "string", "user_id", "bigint"),
         ("snapshot.responseId", "bigint", "response_id", "bigint"),
         ("snapshot.passed", "boolean", "passed", "boolean"),
-        ("snapshot.passedOn", "bigint", "passed_on", "timestamp")
+        ("snapshot.passedOn", "bigint", "passed_on", "timestamp"),
+        ("snapshot.revoked", "boolean", "revoked", "boolean"),
+        ("snapshot.revokedOn", "bigint", "revoked_on", "timestamp"),
+        ("snapshot.certified", "boolean", "certified", "boolean")
     ]
     certified_quiz_snapshots = CertifiedQuizSnapshots(mapping_list, PARTITION_KEY)
