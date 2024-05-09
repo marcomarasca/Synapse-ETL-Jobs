@@ -12,7 +12,7 @@ BENEFACTOR_ID = "benefactor_id"
 PROJECT_ID = "project_id"
 PARENT_ID = "parent_id"
 FILE_HANDLE_ID = "file_handle_id"
-
+ACTIVITY_ID = "activity_id"
 
 class NodeSnapshots(GlueJob):
 
@@ -34,6 +34,7 @@ class NodeSnapshots(GlueJob):
         dynamic_record[PROJECT_ID] = Utils.syn_id_string_to_int(dynamic_record[PROJECT_ID])
         dynamic_record[PARENT_ID] = Utils.syn_id_string_to_int(dynamic_record[PARENT_ID])
         dynamic_record[FILE_HANDLE_ID] = Utils.syn_id_string_to_int(dynamic_record[FILE_HANDLE_ID])
+        dynamic_record[ACTIVITY_ID] = Utils.syn_id_string_to_int(dynamic_record[ACTIVITY_ID])
         return dynamic_record
 
 
@@ -60,6 +61,7 @@ if __name__ == "__main__":
         ("snapshot.versionComment", "string", "version_comment", "string"),
         ("snapshot.versionLabel", "string", "version_label", "string"),
         ("snapshot.alias", "string", "alias", "string"),
+        ("snapshot.activityId", "string", "activity_id", "string"),
         ("snapshot.columnModelIds", "array", "column_model_ids", "array"),
         ("snapshot.scopeIds", "array", "scope_ids", "array"),
         ("snapshot.items", "array", "items", "array"),
