@@ -65,7 +65,7 @@ if __name__ == "__main__":
         ("snapshot.columnModelIds", "array", "column_model_ids", "array"),
         ("snapshot.scopeIds", "array", "scope_ids", "array"),
         ("snapshot.items", "array", "items", "array"),
-        ("snapshot.reference", "struct", "items", "struct"),
+        ("snapshot.reference", "struct", "reference", "struct"),
         ("snapshot.isSearchEnabled", "boolean", "is_search_enabled", "boolean"),
         ("snapshot.definingSQL", "string", "defining_sql", "string"),
         ("snapshot.isPublic", "boolean", "is_public", "boolean"),
