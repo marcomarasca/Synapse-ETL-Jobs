@@ -57,11 +57,21 @@ if __name__ == "__main__":
         ("snapshot.versionNumber", "bigint", "version_number", "bigint"),
         ("snapshot.fileHandleId", "string", "file_handle_id", "string"),
         ("snapshot.name", "string", "name", "string"),
+        ("snapshot.versionComment", "string", "version_comment", "string"),
+        ("snapshot.versionLabel", "string", "version_label", "string"),
+        ("snapshot.alias", "string", "alias", "string"),
+        ("snapshot.columnModelIds", "array", "column_model_ids", "array"),
+        ("snapshot.scopeIds", "array", "scope_ids", "array"),
+        ("snapshot.items", "array", "items", "array"),
+        ("snapshot.reference", "struct", "items", "struct"),
+        ("snapshot.isSearchEnabled", "boolean", "is_search_enabled", "boolean"),
+        ("snapshot.definingSQL", "string", "defining_sql", "string"),
         ("snapshot.isPublic", "boolean", "is_public", "boolean"),
         ("snapshot.isControlled", "boolean", "is_controlled", "boolean"),
         ("snapshot.isRestricted", "boolean", "is_restricted", "boolean"),
         ("snapshot.effectiveArs", "array", "effective_ars", "array"),
         ("snapshot.annotations", "string", "annotations", "string"),
-        ("snapshot.derivedAnnotations", "string", "derived_annotations", "string")
+        ("snapshot.derivedAnnotations", "string", "derived_annotations", "string"),
+        ("snapshot.internalAnnotations", "string", "internal_annotations", "string")
     ]
     node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)
