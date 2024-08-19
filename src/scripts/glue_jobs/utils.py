@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import re
 
 class Utils(object):
     @staticmethod
@@ -9,13 +9,12 @@ class Utils(object):
 
         input_string = input_string.strip()
 
-        if input_string.startswith('syn'):
-            input_string = input_string[len('syn'):]
+        match = re.search(r"^(?:syn)?(\d+)(?:\.\d+)?$", input_string)
 
-        if not input_string:
+        if match:
+            return int(match.group(1))
+        else:
             return None
-
-        return int(input_string)
 
     @staticmethod
     def ms_to_partition_date(timestamp_ms):

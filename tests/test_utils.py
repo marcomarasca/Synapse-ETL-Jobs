@@ -8,8 +8,16 @@ class TestUtils(unittest.TestCase):
         input = "syn123"
         self.assertEqual(123, Utils.syn_id_string_to_int(input))
 
+    def test_syn_id_string_to_int_with_version(self):
+        input = "syn123.1"
+        self.assertEqual(123, Utils.syn_id_string_to_int(input))
+
     def test_syn_id_string_to_int_with_no_syn_prefix(self):
         input = "123"
+        self.assertEqual(123, Utils.syn_id_string_to_int(input))
+
+    def test_syn_id_string_to_int_with_no_syn_prefix_and_version(self):
+        input = "123.23"
         self.assertEqual(123, Utils.syn_id_string_to_int(input))
     
     def test_syn_id_string_to_int_with_long_value(self):
