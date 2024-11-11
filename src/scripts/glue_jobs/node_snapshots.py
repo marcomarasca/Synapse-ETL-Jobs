@@ -74,6 +74,7 @@ if __name__ == "__main__":
         ("snapshot.effectiveArs", "array", "effective_ars", "array"),
         ("snapshot.annotations", "string", "annotations", "string"),
         ("snapshot.derivedAnnotations", "string", "derived_annotations", "string"),
-        ("snapshot.internalAnnotations", "string", "internal_annotations", "string")
+        ("snapshot.internalAnnotations", "string", "internal_annotations", "string"),
+        ("snapshot.versionHistory", "array", "version_history", "array")
     ]
     node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)
