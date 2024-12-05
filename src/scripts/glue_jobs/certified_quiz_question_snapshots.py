@@ -30,6 +30,8 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
                 ("changeType", "string", "change_type", "string"),
                 ("snapshot.userId", "string", "change_user_id", "bigint"),
                 ("snapshotTimestamp", "bigint", "snapshot_timestamp", "timestamp"),
+                # Note that we map the same timestamp into a bigint so that we can extract the partition date
+                ("snapshotTimestamp", "bigint", "snapshot_date", "bigint"),
                 ("stack", "string", "stack", "string"),
                 ("instance", "string", "instance", "string"),
                 ("snapshot.responseId", "int", "response_id", "bigint"),
@@ -55,7 +57,7 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
 
         dynamic_record["corrections"] = correctionInfo
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["changeTimestamp"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record[PARTITION_KEY])
         return dynamic_record
 
 
