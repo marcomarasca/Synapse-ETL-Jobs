@@ -55,7 +55,7 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
 
         dynamic_record["corrections"] = correctionInfo
         # This is the partition date
-        dynamic_record["snapshot_date"] = Utils.ms_to_partition_date(dynamic_record["changeTimestamp"])
+        dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record["snapshotTimestamp"])
         return dynamic_record
 
 
