@@ -56,6 +56,7 @@ if __name__ == "__main__":
         ("snapshot.location", "string", "location", "string"),
         ("snapshot.company", "string", "company", "string"),
         ("snapshot.position", "string", "position", "string"),
+        ("snapshot.industry", "string", "industry", "string"),
         ("snapshot.createdOn", "bigint", "created_on", "timestamp"),
         ("snapshot.twoFactorAuthEnabled", "boolean", "is_two_factor_auth_enabled", "boolean"),
         ("snapshot.tosAgreements", "array", "tos_agreements", "array")
