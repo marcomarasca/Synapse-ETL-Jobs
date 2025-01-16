@@ -75,6 +75,7 @@ if __name__ == "__main__":
         ("snapshot.annotations", "string", "annotations", "string"),
         ("snapshot.derivedAnnotations", "string", "derived_annotations", "string"),
         ("snapshot.internalAnnotations", "string", "internal_annotations", "string"),
-        ("snapshot.versionHistory", "array", "version_history", "array")
+        ("snapshot.versionHistory", "array", "version_history", "array"),
+        ("snapshot.projectStorageUsage", "struct", "project_storage_usage", "struct")
     ]
     node_snapshots = NodeSnapshots(mapping_list, PARTITION_KEY)
