@@ -31,6 +31,12 @@ class CertifiedQuizSnapshots(GlueJob):
         if "certified" not in dynamic_record or dynamic_record["certified"] is None:
             dynamic_record["certified"] = dynamic_record["passed"]
 
+        # The createdOn field was introduced in https://sagebionetworks.jira.com/browse/PLFM-8788
+        # and need default values for older records. We use the deprecated "passedOn" that was actually 
+        # matching the creation date of the record and was never used to indicate when the quiz was passed
+        if "created_on" not in dynamic_record or dynamic_record["created_on"] is None:
+            dynamic_record["created_on"] = dynamic_record["passed_on"]
+
         return dynamic_record
 
 
@@ -49,6 +55,7 @@ if __name__ == "__main__":
         ("snapshot.passedOn", "bigint", "passed_on", "timestamp"),
         ("snapshot.revoked", "boolean", "revoked", "boolean"),
         ("snapshot.revokedOn", "bigint", "revoked_on", "timestamp"),
-        ("snapshot.certified", "boolean", "certified", "boolean")
+        ("snapshot.certified", "boolean", "certified", "boolean"),
+        ("snapshot.createdOn", "bigint", "created_on", "timestamp")
     ]
     certified_quiz_snapshots = CertifiedQuizSnapshots(mapping_list, PARTITION_KEY)
