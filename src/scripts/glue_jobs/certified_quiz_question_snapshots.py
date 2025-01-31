@@ -36,6 +36,7 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
                 ("correction.questionIndex", "int", "question_index", "bigint"),
                 ("correction.isCorrect", "boolean", "is_correct", "boolean"),
                 ("snapshot_date", "string", "snapshot_date", "date"),
+                ("created_on", "bigint", "created_on", "timestamp")
             ]
         )
         return mapped_output_frame
@@ -56,6 +57,19 @@ class CertifiedQuizQuestionSnapshots(GlueJob):
         dynamic_record["corrections"] = correctionInfo
         # This is the partition date
         dynamic_record[PARTITION_KEY] = Utils.ms_to_partition_date(dynamic_record["snapshotTimestamp"])
+
+        # The createdOn field was introduced in https://sagebionetworks.jira.com/browse/PLFM-8788
+        # and need default values for older records. We use the deprecated "passedOn" that was actually 
+        # matching the creation date of the record and was never used to indicate when the quiz was passed
+        if "createdOn" not in dynamic_record["snapshot"] or dynamic_record["snapshot"]["createdOn"] is None:
+            createdOn = dynamic_record["snapshot"]["passedOn"]
+        else:
+            createdOn = dynamic_record["snapshot"]["createdOn"]
+        
+        # We cannot change nested fields (e.g. dynamic_record["snaphost"]["createdOn"] = createdOn does not work) in the dynamic_record
+        # without transforming it to a data frame so we just use a new column
+        dynamic_record["created_on"] = createdOn
+
         return dynamic_record
 
 
